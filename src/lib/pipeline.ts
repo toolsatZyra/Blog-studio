@@ -6,7 +6,7 @@ import { serpResearch } from './modules/serpResearch';
 import { topicScorer } from './modules/topicScorer';
 import { briefGenerator } from './modules/briefGenerator';
 import { blogGenerator } from './modules/blogGenerator';
-import { humanEditor } from './modules/humanEditor';
+import { humanizer } from './modules/humanizer';
 import { seoGeoAuditor } from './modules/seoGeoAuditor';
 import { exporter } from './modules/exporter';
 import { providerStatus } from './providers';
@@ -43,7 +43,7 @@ export async function runWriting(inputs: Inputs, research: Research, selected: T
 }> {
   const brief = briefGenerator(inputs, research, selected);
   const rawDraft = await blogGenerator(inputs, brief);
-  const draft = await humanEditor(rawDraft);
+  const draft = await humanizer(rawDraft);
   const audit = seoGeoAuditor(draft, brief, inputs);
   const exports = exporter(draft, brief, inputs);
   return { brief, draft, audit, exports };

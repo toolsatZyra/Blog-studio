@@ -1,5 +1,8 @@
 import type { Draft, Brief, ScoreCard } from '../types';
-import { buildCard, draftText, sentences, check } from './score';
+import {
+  buildCard, draftText, sentences, check,
+  duplicateParagraphCount, uniqueRatio, findPlaceholders,
+} from './score';
 import { countWords } from '../util';
 
 /** On-page SEO scorecard for the draft + brief. */
@@ -13,6 +16,10 @@ export function seoChecks(draft: Draft, brief: Brief): ScoreCard {
   const total = countWords(text);
   const kwCount = countOccurrences(lower, kwWords);
   const density = total ? (kwCount / total) * 100 : 0;
+  const dupes = duplicateParagraphCount(draft);
+  const uniq = uniqueRatio(draft);
+  const placeholders = findPlaceholders(text);
+  const exactKwHits = (lower.match(new RegExp(`\\b${escapeRe(kw)}\\b`, 'g')) ?? []).length;
   const avgSentence = sentences(draft).reduce((s, x) => s + countWords(x), 0) / Math.max(1, sentences(draft).length);
 
   // heading hierarchy: no H3 before the first H2
@@ -46,8 +53,21 @@ export function seoChecks(draft: Draft, brief: Brief): ScoreCard {
       'Every external stat should be sourced.'),
     check('readability', 'Readable average sentence length',
       avgSentence <= 26 ? 'pass' : 'warn', `Avg ${avgSentence.toFixed(1)} words/sentence.`),
-    check('no-stuffing', 'No keyword stuffing (<2.5%)',
-      density < 2.5 ? 'pass' : 'fail', `Density ${density.toFixed(2)}%.`),
+    check('no-stuffing', 'No keyword stuffing',
+      density < 2.5 && exactKwHits <= 6 ? 'pass' : 'fail',
+      `Density ${density.toFixed(2)}%; exact primary keyword appears ${exactKwHits}×${exactKwHits > 6 ? ' (over-used)' : ''}.`),
+    check('no-duplicate-content', 'No duplicated/spun paragraphs',
+      dupes === 0 ? 'pass' : 'fail',
+      dupes === 0 ? 'All paragraphs are distinct.' : `${dupes} near-duplicate paragraph(s) — scaled-content abuse risk; rewrite each section uniquely.`),
+    check('no-placeholders', 'No unresolved placeholders',
+      placeholders.length === 0 ? 'pass' : 'fail',
+      placeholders.length === 0 ? 'Clean.' : `Internal placeholders left in body: ${placeholders.slice(0, 3).join(', ')} — resolve before publishing.`),
+    check('unique-content', 'Enough unique content (not thin/repetitive)',
+      uniq >= 0.4 && total >= 600 ? 'pass' : uniq >= 0.3 ? 'warn' : 'fail',
+      `Unique-word ratio ${(uniq * 100).toFixed(0)}%, ${total} words.`),
+    check('depth', 'Sufficient depth for a blog',
+      total >= 1000 ? 'pass' : total >= 600 ? 'warn' : 'fail',
+      `${total} words — aim for ~1,200+. (The mock demo runs short; the Claude writer hits target.)`),
   ]);
 }
 

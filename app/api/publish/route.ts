@@ -20,6 +20,14 @@ export async function POST(req: NextRequest) {
     if (!blogPost?.slug || !blogPost.body?.length) {
       return NextResponse.json({ error: 'A generated BlogPost (with body) is required.' }, { status: 400 });
     }
+    // Server-side safety net: never publish a post with unresolved placeholders.
+    const bodyText = blogPost.body.map((b) => b.text).join(' ');
+    if (/\[source needed\]|REPLACE-ME|\bTODO\b|lorem ipsum/i.test(bodyText)) {
+      return NextResponse.json(
+        { error: 'Draft contains unresolved placeholders ([source needed]/REPLACE-ME/TODO) — resolve them before publishing.' },
+        { status: 400 },
+      );
+    }
     // nonce keeps branch names unique; caller supplies one (avoids Date in the module).
     const result = await publishToGitHub(blogPost, nonce || String(Date.now()), image);
     return NextResponse.json({ result });

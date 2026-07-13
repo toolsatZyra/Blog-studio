@@ -60,22 +60,21 @@ export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): S
   ]);
 }
 
-const PROOF_NUMBERS = ['1,000', '1000', '5', '50m', '50 m', '50+', '2,000', '2000', '$10m', '$10 m', '60m', '60 m'];
+const PROOF_NUMBERS = ['1,000', '1000', '50m', '50 m', '2,000', '2000', '$10m', '$10 m', '60m', '60 m'];
 
+// Only STATISTIC-shaped numbers count: percentages, currency amounts, and
+// magnitude/multiplier figures. Plain counts and durations ("120 seconds",
+// "three cuts", "week one") are not statistics and are never flagged.
 function findUnsupportedStats(text: string): string[] {
   const out: string[] = [];
-  // crude: find number tokens with %, $, m, k, or 3+ digits
-  const matches = text.match(/\$?\d[\d,]*\.?\d*\s?(%|m|k|million|billion|crore|lakh)?/gi) ?? [];
+  const re = /(\d[\d,]*\.?\d*\s?%)|([₹$]\s?\d[\d,]*\.?\d*\s?(?:m|k|bn|cr|million|billion|crore|lakh)?\+?)|(\d[\d,]*\.?\d*\s?(?:million|billion|crore|lakh)\+?)|(\d+(?:\.\d+)?\s?[x×])/gi;
+  const matches = text.match(re) ?? [];
   const sentencesArr = text.split(/(?<=[.!?])\s+/);
   for (const m of matches) {
-    const token = m.trim().toLowerCase();
-    if (token.length < 2) continue;
+    const token = m.trim().toLowerCase().replace(/\s+/g, ' ');
     if (PROOF_NUMBERS.some((p) => token.includes(p))) continue; // Zyra proof point
-    // find the sentence containing it; ok if it has a source marker or link
     const sent = sentencesArr.find((s) => s.toLowerCase().includes(token)) ?? '';
     if (/\[source needed\]|source:|according to|https?:\/\//i.test(sent)) continue;
-    // bare years and small counts are fine
-    if (/^\d{4}$/.test(token) || /^\d{1,2}$/.test(token)) continue;
     out.push(m.trim());
   }
   return [...new Set(out)];

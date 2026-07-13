@@ -5,8 +5,11 @@ import { buildCard } from '../src/lib/scoring/score.ts';
 import { findBannedPhrases } from '../src/lib/scoring/bannedPhrases.ts';
 import { topicScorer, SCORE_WEIGHTS } from '../src/lib/modules/topicScorer.ts';
 import { exporter } from '../src/lib/modules/exporter.ts';
-import { humanEditor } from '../src/lib/modules/humanEditor.ts';
-import { slugify } from '../src/lib/util.ts';
+import { humanizer } from '../src/lib/modules/humanizer.ts';
+import { slugify, cleanKeyword, dedupeAdjacentPhrase } from '../src/lib/util.ts';
+import { duplicateParagraphCount, findPlaceholders } from '../src/lib/scoring/score.ts';
+import { seoGeoAuditor } from '../src/lib/modules/seoGeoAuditor.ts';
+import { runResearch, runWriting } from '../src/lib/pipeline.ts';
 import { serializeBlogPost, insertIntoBlogData } from '../src/lib/modules/publisher.ts';
 import type { Inputs, Research, Draft, Brief, BlogPostObject } from '../src/lib/types.ts';
 
@@ -104,11 +107,30 @@ test('exporter builds all artifacts with a placeholder poster and derived readTi
   assert.equal(out.blogPost.category, 'Performance');
 });
 
-test('humanEditor strips banned phrases and adds contractions', async () => {
-  const edited = await humanEditor(draft);
+test('humanizer strips banned phrases and adds contractions', async () => {
+  const edited = await humanizer(draft);
   const text = edited.blocks.map((b) => b.text ?? '').join(' ').toLowerCase();
   assert.ok(!text.includes('it is worth noting'));
   assert.ok(!text.includes(' we are ')); // contracted to we're
+});
+
+test('humanizer removes AI tropes and reports applied rules', async () => {
+  const tropey: Draft = {
+    title: 't',
+    blocks: [
+      { type: 'p', text: `In today's fast-paced world, we leverage cutting-edge tools to unlock growth. It is not just fast, it is seamless. Let's dive into it. At the end of the day, it's a game-changer.` },
+      { type: 'p', text: `A launch needs three cuts for a campaign, and that works well.` }, // must NOT be damaged
+    ],
+    faq: [], wordCount: 40, sourceNeededCount: 0, mode: 'mock',
+  };
+  const out = await humanizer(tropey);
+  const t = out.blocks.map((b) => b.text).join(' ').toLowerCase();
+  for (const bad of ["in today's fast-paced", 'leverage', 'cutting-edge', 'unlock', 'seamless', "let's dive", 'at the end of the day', 'game-changer', 'it is not just']) {
+    assert.ok(!t.includes(bad), `still contains: ${bad}`);
+  }
+  assert.ok((out.appliedRules?.length ?? 0) >= 5);
+  // legitimate "for a campaign," prose survives intact
+  assert.ok(out.blocks[1].text!.includes('three cuts for a campaign'), 'damaged good prose');
 });
 
 const blogPost: BlogPostObject = {
@@ -162,6 +184,54 @@ test('currencyMismatch flags non-target currency but not $ or in-market currency
   const india = parseMarkets('India');
   assert.deepEqual(currencyMismatch('₹8L and our $10M ad spend managed.', india), []); // ₹ ok; $ never flagged
   assert.ok(currencyMismatch('Priced in AED 20,000.', india).length > 0); // AED wrong for India-only
+});
+
+test('dedupeAdjacentPhrase collapses repeated phrases', () => {
+  assert.equal(dedupeAdjacentPhrase('cost in india cost in india'), 'cost in india');
+  assert.equal(dedupeAdjacentPhrase('ai brand film cost'), 'ai brand film cost');
+});
+
+test('cleanKeyword strips filler + doubling and stays short', () => {
+  const k = cleanKeyword('Looking for recommendations on AI brand film cost in India cost in India for a D2C brand');
+  assert.ok(!/cost in india cost in india/i.test(k));
+  assert.ok(k.split(' ').length <= 6, `too long: "${k}"`);
+  assert.ok(k.includes('brand film'));
+});
+
+test('duplicateParagraphCount + findPlaceholders catch spun/placeholder content', () => {
+  const spun = 'Short answer: it comes down to fit and execution and the winners are specific and know the format.';
+  const bad: Draft = {
+    title: 't',
+    blocks: [
+      { type: 'p', text: spun },
+      { type: 'p', text: spun.replace('fit', 'fit') }, // identical
+      { type: 'p', text: 'Cite a benchmark here [source needed].' },
+    ],
+    faq: [], wordCount: 40, sourceNeededCount: 1, mode: 'mock',
+  };
+  assert.ok(duplicateParagraphCount(bad) >= 1);
+  assert.deepEqual(findPlaceholders('a [source needed] b REPLACE-ME').sort(), ['[source needed]', 'REPLACE-ME'].sort());
+});
+
+test('seoGeoAuditor blocks publishing of duplicate/placeholder drafts', () => {
+  const p = 'Short answer: ai brand film cost comes down to fit and execution and the winners are specific about the brief.';
+  const bad: Draft = {
+    title: 't',
+    blocks: [{ type: 'h2', text: 'What is it?' }, { type: 'p', text: p }, { type: 'h2', text: 'Cost?' }, { type: 'p', text: p }, { type: 'p', text: 'Benchmark [source needed].' }],
+    faq: [], wordCount: 45, sourceNeededCount: 1, mode: 'mock',
+  };
+  const a = seoGeoAuditor(bad, brief, inputs);
+  assert.equal(a.publishable, false);
+  assert.ok(a.blockers.length > 0);
+});
+
+test('cleaned mock pipeline produces no duplicates or placeholders', async () => {
+  const ins: Inputs = { ...inputs, topic: 'AI brand film cost in India' };
+  const { research, candidates } = await runResearch(ins);
+  const { draft } = await runWriting(ins, research, candidates[0]);
+  assert.equal(draft.sourceNeededCount, 0, 'no [source needed] in body');
+  assert.equal(duplicateParagraphCount(draft), 0, 'no duplicate paragraphs');
+  assert.equal(findPlaceholders(draft.blocks.map((b) => b.text ?? '').join(' ')).length, 0);
 });
 
 test('imageGenerator returns a deterministic mock SVG when no key is set', async () => {

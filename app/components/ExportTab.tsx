@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Exports, Brief, Inputs, HeroImage } from '@/lib/types';
+import type { Exports, Brief, Inputs, HeroImage, Audit } from '@/lib/types';
 import { CopyBlock } from './ui';
 
 function download(name: string, content: string, type = 'text/plain') {
@@ -11,7 +11,7 @@ function download(name: string, content: string, type = 'text/plain') {
   URL.revokeObjectURL(url);
 }
 
-export function ExportTab({ exports, brief, inputs }: { exports?: Exports; brief?: Brief; inputs?: Inputs }) {
+export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports; brief?: Brief; inputs?: Inputs; audit?: Audit }) {
   const [hero, setHero] = useState<HeroImage>();
   const [imgLoading, setImgLoading] = useState(false);
   const [imgErr, setImgErr] = useState('');
@@ -85,7 +85,7 @@ export function ExportTab({ exports, brief, inputs }: { exports?: Exports; brief
       <div className="card">
         <div className="export-head">
           <h3 style={{ margin: 0 }}>Publish to thezyra.in</h3>
-          <button className="btn small" onClick={publish} disabled={publishing}>
+          <button className="btn small" onClick={publish} disabled={publishing || (audit && !audit.publishable)}>
             {publishing ? <><span className="spinner" /> Opening PR…</> : 'Open pull request →'}
           </button>
         </div>
@@ -93,6 +93,14 @@ export function ExportTab({ exports, brief, inputs }: { exports?: Exports; brief
           Appends this post to <code>blog-data.ts</code> on a new branch{hero?.publishable ? ' (with the hero image)' : ''} and
           opens a PR for review — nothing goes live until you merge.
         </p>
+        {audit && !audit.publishable && (
+          <div className="error">
+            <strong>Publishing blocked — fix these first:</strong>
+            <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+              {audit.blockers.map((b, i) => <li key={i}>{b}</li>)}
+            </ul>
+          </div>
+        )}
         {pubErr && <div className="error">{pubErr}</div>}
         {prUrl && (
           <div className="selected-bar" style={{ marginBottom: 0 }}>

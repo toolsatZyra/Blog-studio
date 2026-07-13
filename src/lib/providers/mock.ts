@@ -5,7 +5,7 @@ import type {
   KeywordProvider, SerpProvider, SocialProvider, KeywordMetric,
   DiscoveredQuestion, SearchIntent,
 } from '../types';
-import { hash, seededInt, seededPick } from '../util';
+import { hash, seededInt, seededPick, dedupeAdjacentPhrase } from '../util';
 
 function intentFor(kw: string): SearchIntent {
   const t = kw.toLowerCase();
@@ -53,18 +53,24 @@ export const mockSerpProvider: SerpProvider = {
   name: 'mock',
   mode: 'mock',
   async serp(query) {
-    const t = query.replace(/^(what|how|why|is|best)\s+/i, '').trim();
+    // Strip a trailing "cost in india"-style tail so templates don't double it.
+    const t = dedupeAdjacentPhrase(
+      query.replace(/^(what|how|why|is|best)\s+/i, '')
+        .replace(/\s+cost\s+in\s+india\b/i, '')
+        .trim(),
+    ) || query.trim();
     const n = seededInt(query, 3, 5);
     const organic = Array.from({ length: n }, (_, i) => ({
       title: `${seededPick(query + i, ['The complete guide to', 'Everything about', 'How brands use', 'A practical look at'])} ${t}`,
       url: `https://example-${(hash(query + i) % 900) + 100}.com/${t.replace(/\s+/g, '-')}`,
       snippet: `An overview of ${t} covering the basics, common questions, and what to consider. Coverage of cost and process is thin.`,
     }));
+    const clean = (s: string) => dedupeAdjacentPhrase(s.replace(/\s+/g, ' ').trim());
     return {
       organic,
-      paa: PAA_TEMPLATES.slice(0, seededInt(query + 'paa', 4, 6)).map((p) => p.replace(/\{t\}/g, t)),
-      related: RELATED_TEMPLATES.slice(0, seededInt(query + 'rel', 5, 8)).map((p) => p.replace(/\{t\}/g, t)),
-      autocomplete: [`${t} india`, `${t} cost`, `${t} for brands`, `ai ${t}`, `${t} agency`].slice(
+      paa: PAA_TEMPLATES.slice(0, seededInt(query + 'paa', 4, 6)).map((p) => clean(p.replace(/\{t\}/g, t))),
+      related: RELATED_TEMPLATES.slice(0, seededInt(query + 'rel', 5, 8)).map((p) => clean(p.replace(/\{t\}/g, t))),
+      autocomplete: [`${t} india`, `${t} cost`, `${t} for brands`, `ai ${t}`, `${t} agency`].map(clean).slice(
         0, seededInt(query + 'ac', 3, 5)),
     };
   },

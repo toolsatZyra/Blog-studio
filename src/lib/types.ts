@@ -164,6 +164,7 @@ export interface Draft {
   wordCount: number;
   sourceNeededCount: number; // how many [source needed] tags remain
   mode: SourceMode;
+  appliedRules?: string[]; // humanizer rules that fired
 }
 
 export type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';
@@ -185,6 +186,8 @@ export interface Audit {
   geo: ScoreCard;
   humanVoice: ScoreCard;
   preflight?: ScoreCard; // site-level; filled by accessPreflight
+  publishable: boolean; // false if any critical check fails or scores are below floor
+  blockers: string[]; // human-readable reasons publishing is blocked
 }
 
 /** Zyra's existing CMS post shape (src/lib/blog-data.ts on thezyra.in). */

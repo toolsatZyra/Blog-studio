@@ -1,16 +1,18 @@
 import type { Inputs, Research, TopicCandidate, Brief, BriefSection } from '../types';
 import { ZYRA_INTERNAL_LINKS, matchService } from '../zyraContext';
-import { slugify, titleCase } from '../util';
+import { slugify, titleCase, smartTitle, cleanKeyword } from '../util';
 
 /** Builds the full SEO/GEO/AEO brief for the chosen topic. Deterministic + reliable. */
 export function briefGenerator(
   inputs: Inputs, research: Research, selected: TopicCandidate,
 ): Brief {
   const topic = selected.topic.replace(/\?+$/, '').trim();
-  const core = topic.toLowerCase();
+  // Concise, non-stuffed primary keyword (fixes "cost in india cost in india"
+  // and the whole-question-as-keyword stuffing).
+  const core = cleanKeyword(topic) || cleanKeyword(inputs.topic);
   const svc = matchService(topic);
 
-  const recommendedTitle = craftTitle(topic, inputs);
+  const recommendedTitle = craftTitle(core, inputs);
   const metaTitle = recommendedTitle.length <= 60 ? recommendedTitle : recommendedTitle.slice(0, 57).trim() + '…';
 
   // Question-led H2s from the strongest discovered questions.
@@ -39,10 +41,10 @@ export function briefGenerator(
 
   return {
     recommendedTitle,
-    alternativeTitles: altTitles(topic, inputs),
+    alternativeTitles: altTitles(core, inputs),
     metaTitle,
-    metaDescription: metaDesc(topic, inputs),
-    slug: slugify(topic),
+    metaDescription: metaDesc(core, inputs),
+    slug: slugify(core),
     primaryKeyword: core,
     secondaryKeywords,
     intent: research.intent,
@@ -66,7 +68,7 @@ export function briefGenerator(
 }
 
 function craftTitle(topic: string, inputs: Inputs): string {
-  const t = titleCase(topic);
+  const t = smartTitle(topic);
   if (inputs.goal === 'comparison') return `${t}: An Honest Comparison for ${inputs.audience.geographies || 'India'}`;
   if (/cost|price/i.test(topic)) return `${t}: What Brands Actually Pay`;
   if (inputs.goal === 'educational') return `${t}: A Practical Guide`;
@@ -74,7 +76,7 @@ function craftTitle(topic: string, inputs: Inputs): string {
 }
 
 function altTitles(topic: string, inputs: Inputs): string[] {
-  const t = titleCase(topic);
+  const t = smartTitle(topic);
   return [
     `${t} — What Marketers Need to Know`,
     `The Real Story Behind ${t}`,

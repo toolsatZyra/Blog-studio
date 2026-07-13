@@ -22,6 +22,18 @@ export function ChecklistTab({ audit }: { audit?: Audit }) {
 
   return (
     <div>
+      <div className="card" style={{ borderColor: audit.publishable ? 'var(--green)' : 'var(--red)' }}>
+        <h3 style={{ margin: 0 }}>
+          {audit.publishable
+            ? '✅ Publish-ready — no critical issues'
+            : '⛔ Not publish-ready'}
+        </h3>
+        {!audit.publishable && (
+          <ul style={{ margin: '8px 0 0', paddingLeft: 18 }} className="small">
+            {audit.blockers.map((b, i) => <li key={i}>{b}</li>)}
+          </ul>
+        )}
+      </div>
       <ScoreCardView title="SEO score" card={audit.seo} />
       <ScoreCardView title="GEO / AEO score" card={audit.geo} />
       <ScoreCardView title="Human-voice gate" card={audit.humanVoice} />

@@ -26,3 +26,50 @@ export function sentences(draft: Draft): string[] {
 export function check(id: string, label: string, status: CheckResult['status'], detail: string): CheckResult {
   return { id, label, status, detail };
 }
+
+/** Paragraph texts (p blocks) from a draft. */
+export function paragraphs(draft: Draft): string[] {
+  return draft.blocks.filter((b) => b.type === 'p' && b.text).map((b) => b.text!);
+}
+
+function shingles(text: string, n = 4): Set<string> {
+  const words = text.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const out = new Set<string>();
+  for (let i = 0; i + n <= words.length; i++) out.add(words.slice(i, i + n).join(' '));
+  return out;
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const s of a) if (b.has(s)) inter++;
+  return inter / (a.size + b.size - inter);
+}
+
+/** Count paragraphs that are near-duplicates of an earlier paragraph (Jaccard ≥ 0.5). */
+export function duplicateParagraphCount(draft: Draft): number {
+  const ps = paragraphs(draft).filter((p) => p.split(/\s+/).length >= 8);
+  const sh = ps.map((p) => shingles(p));
+  let dupes = 0;
+  for (let i = 0; i < ps.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (jaccard(sh[i], sh[j]) >= 0.5) { dupes++; break; }
+    }
+  }
+  return dupes;
+}
+
+/** Unique-word ratio over the body text (low = repetitive/thin). */
+export function uniqueRatio(draft: Draft): number {
+  const words = draftText(draft).toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  if (!words.length) return 1;
+  return new Set(words).size / words.length;
+}
+
+/** Unresolved internal placeholders that must never ship. */
+export function findPlaceholders(text: string): string[] {
+  const pats = [/\[source needed\]/gi, /REPLACE-ME/gi, /\bTODO\b/g, /\blorem ipsum\b/gi, /\{\{[^}]*\}\}/g];
+  const hits: string[] = [];
+  for (const re of pats) { const m = text.match(re); if (m) hits.push(...m); }
+  return [...new Set(hits.map((h) => h.trim()))];
+}
