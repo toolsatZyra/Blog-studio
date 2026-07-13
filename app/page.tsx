@@ -170,7 +170,7 @@ export default function Home() {
         {tab === 'brief' && <BriefTab brief={brief} />}
         {tab === 'draft' && <DraftTab draft={draft} brief={brief} />}
         {tab === 'checklist' && <ChecklistTab audit={audit} />}
-        {tab === 'export' && <ExportTab exports={exportsData} />}
+        {tab === 'export' && <ExportTab exports={exportsData} brief={brief} inputs={inputs} />}
       </main>
     </div>
   );

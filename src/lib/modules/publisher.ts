@@ -64,8 +64,15 @@ export interface PublishResult {
   slug: string;
 }
 
-/** Full flow: read blog-data.ts on the base branch → insert → new branch → commit → PR. */
-export async function publishToGitHub(post: BlogPostObject, nonce: string): Promise<PublishResult> {
+export interface PublishImage {
+  path: string; // repo path, e.g. public/posters/<slug>.png
+  base64: string; // raw base64 (no data: prefix)
+}
+
+/** Full flow: read blog-data.ts on the base branch → insert → new branch → commit(s) → PR. */
+export async function publishToGitHub(
+  post: BlogPostObject, nonce: string, image?: PublishImage,
+): Promise<PublishResult> {
   if (!isLive.publish()) {
     throw new Error('Publishing is not configured. Set GITHUB_TOKEN (and optionally PUBLISH_REPO) in .env.');
   }
@@ -101,10 +108,24 @@ export async function publishToGitHub(post: BlogPostObject, nonce: string): Prom
     }),
   });
 
+  // 5b. commit the hero image, if one was generated (new file → no sha needed)
+  if (image?.base64) {
+    await gh(`/repos/${repo}/contents/${image.path.split('/').map(encodeURIComponent).join('/')}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: `blog: hero image for "${post.title}"`,
+        content: image.base64,
+        branch,
+      }),
+    });
+  }
+
   // 6. open the PR
   const posterNote = post.poster.includes('REPLACE-ME')
     ? '\n\n⚠️ **Poster placeholder** — replace `' + post.poster + '` with a real hero image before merging.'
-    : '';
+    : image
+      ? `\n\n🖼️ Hero image committed at \`${image.path}\`.`
+      : '';
   const pr = await gh(`/repos/${repo}/pulls`, {
     method: 'POST',
     body: JSON.stringify({

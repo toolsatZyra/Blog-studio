@@ -92,9 +92,11 @@ Every source is an adapter behind a registry; a missing key silently uses the mo
 
 ## 10. Publishing & out of scope
 
-**Built:** PR-based publishing — the Export tab's "Open pull request" button appends the `BlogPost` to `blog-data.ts` on a new branch of `toolsatZyra/ZyraUpdated` and opens a PR (never commits to the default branch; requires `GITHUB_TOKEN`).
+**Built — hero image:** the Export tab's "Generate hero image" button creates a cinematic poster (OpenAI `gpt-image-1` when configured; a deterministic branded SVG sample otherwise).
 
-**Out of scope (bolt-on later):** hero/OG image generation · scheduled/batch multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework.
+**Built — PR-based publishing:** the "Open pull request" button appends the `BlogPost` to `blog-data.ts` on a new branch of `toolsatZyra/ZyraUpdated`, commits the hero image to `public/posters/` when one was generated, and opens a PR (never commits to the default branch; requires `GITHUB_TOKEN`).
+
+**Out of scope (bolt-on later):** scheduled/batch multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework.
 
 ## 11. Success criteria
 

@@ -3,6 +3,7 @@
 export const env = {
   openaiKey: process.env.OPENAI_API_KEY || '',
   openaiModelCheap: process.env.OPENAI_MODEL_CHEAP || 'gpt-4o-mini',
+  openaiImageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
   anthropicKey: process.env.ANTHROPIC_API_KEY || '',
   claudeModelWriter: process.env.CLAUDE_MODEL_WRITER || 'claude-sonnet-5',
   llmCheapProvider: process.env.LLM_CHEAP_PROVIDER || 'openai',

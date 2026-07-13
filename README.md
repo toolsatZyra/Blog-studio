@@ -42,10 +42,10 @@ Everything persists to `localStorage`, so you can close the tab and resume.
 
 ## Publishing to thezyra.in
 
-The Export tab has an **"Open pull request →"** button. With a `GITHUB_TOKEN` set, it:
+The Export tab has a **"Generate hero image"** button (OpenAI `gpt-image-1` when a key is set; a deterministic branded SVG sample otherwise) and an **"Open pull request →"** button. With a `GITHUB_TOKEN` set, publish:
 1. reads `src/lib/blog-data.ts` on the target repo's default branch,
 2. inserts the generated `BlogPost` as the newest entry in `ALL_POSTS`,
-3. commits it to a fresh `blog/<slug>-<id>` branch, and
+3. commits it to a fresh `blog/<slug>-<id>` branch (**plus the hero image at `public/posters/<slug>.png`** when one was generated, with the post's `poster` pointing at it), and
 4. opens a **pull request** — and returns the PR link.
 
 It **never commits to the default branch** — nothing goes live until you review, swap the placeholder poster, and merge (Vercel then deploys). Defaults target `toolsatZyra/ZyraUpdated` (`master`, `src/lib/blog-data.ts`); override via `PUBLISH_REPO` / `PUBLISH_BASE_BRANCH` / `PUBLISH_BLOG_DATA_PATH`. Without a token the button returns a clear "not configured" message.
@@ -107,4 +107,4 @@ test/                 unit tests
 
 ## Not built yet (bolt-on later)
 
-Hero/OG image generation · scheduled multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework. *(PR-based publishing to thezyra.in is now built — see above.)*
+Scheduled multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework. *(PR-based publishing and hero-image generation are now built — see above.)*

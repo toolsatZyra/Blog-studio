@@ -200,6 +200,18 @@ export interface BlogPostObject {
   featured?: boolean;
 }
 
+export interface HeroImage {
+  dataUrl: string; // data: URL for preview (png or svg)
+  base64: string; // raw base64 payload (no data: prefix)
+  mimeType: string;
+  ext: string; // 'png' | 'svg'
+  filename: string; // e.g. "ai-brand-film-cost.png" ('' when mock)
+  posterPath: string; // what BlogPost.poster becomes
+  prompt: string;
+  mode: SourceMode;
+  publishable: boolean; // true only for a real generated raster image
+}
+
 export interface Exports {
   markdown: string;
   html: string;
