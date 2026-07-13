@@ -83,6 +83,9 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--gold); bord
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 12px; }
+.chip.geo { cursor: pointer; color: var(--muted); font-size: 13px; padding: 5px 14px; }
+.chip.geo:hover { color: var(--text); border-color: var(--gold); }
+.chip.geo.active { background: var(--gold); color: #1a1712; border-color: var(--gold); font-weight: 600; }
 
 .qlist { list-style: none; padding: 0; margin: 0; }
 .qlist li { padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 10px; }

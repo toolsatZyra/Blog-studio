@@ -86,6 +86,8 @@ export const DEFAULT_ZYRA_CONTEXT = `Zyra is India's AI Content Studio (also pos
 
 Zyra produces brand films, short films, micro drama, OTT-ready content, performance ads, and social media content — combining cinematic quality and AI-accelerated production with human-directed creative judgment, for faster timelines, lower cost, and culture-speed delivery.
 
+Zyra works with brands across India, the GCC (Gulf markets like the UAE and Saudi Arabia), and the US — cinematic content built for each market's audience, at the speed of culture.
+
 Five services:
 1. AI Native Film Production — full-length series, films, specials for streaming/OTT.
 2. AI Brand Films & Commercials — cinematic, AI-accelerated brand films.

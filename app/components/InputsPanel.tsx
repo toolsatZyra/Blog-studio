@@ -3,6 +3,7 @@ import type { Inputs, BlogGoal, Tone } from '@/lib/types';
 
 const GOALS: BlogGoal[] = ['awareness', 'lead generation', 'thought leadership', 'comparison', 'educational'];
 const TONES: Tone[] = ['cinematic but useful', 'founder-led', 'expert editorial', 'simple and direct'];
+const GEOS = ['India', 'GCC', 'US'];
 
 export function InputsPanel({
   inputs, setInputs, onRun, loading,
@@ -14,6 +15,12 @@ export function InputsPanel({
 }) {
   const up = (patch: Partial<Inputs>) => setInputs({ ...inputs, ...patch });
   const upAud = (patch: Partial<Inputs['audience']>) => setInputs({ ...inputs, audience: { ...inputs.audience, ...patch } });
+
+  const geoList = inputs.audience.geographies.split(',').map((s) => s.trim()).filter(Boolean);
+  const toggleGeo = (g: string) => {
+    const next = geoList.includes(g) ? geoList.filter((x) => x !== g) : [...geoList, g];
+    upAud({ geographies: next.join(', ') });
+  };
 
   return (
     <div>
@@ -28,7 +35,18 @@ export function InputsPanel({
       <div className="row">
         <div>
           <label>Geographies</label>
-          <input value={inputs.audience.geographies} onChange={(e) => upAud({ geographies: e.target.value })} placeholder="India, GCC, US" />
+          <div className="chips" style={{ paddingTop: 4 }}>
+            {GEOS.map((g) => (
+              <button
+                key={g}
+                type="button"
+                className={`chip geo ${geoList.includes(g) ? 'active' : ''}`}
+                onClick={() => toggleGeo(g)}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
         </div>
         <div>
           <label>Roles</label>

@@ -4,6 +4,8 @@
 
 **Who:** Zyra is **India's AI Content Studio** (also positioned as a *Global AI Content Studio*), based in Gurgaon, Haryana. Core line: **"Where AI meets Cinema."** Zyra produces brand films, short films, micro drama, OTT-ready content, performance ads, and social media content — combining cinematic quality and AI-accelerated production with human-directed creative judgment, for faster timelines, lower cost, and culture-speed delivery. Website: https://www.thezyra.in · marketersatzyra@gmail.com
 
+**Markets served:** India, the **GCC** (Gulf markets — e.g. UAE, Saudi Arabia), and the **US**. Tailor examples and references to the target market of each post.
+
 ## Five service pillars
 1. **AI Native Film Production** — full-length series, films, specials for streaming/OTT platforms.
 2. **AI Brand Films & Commercials** — cinematic brand films and commercials, AI-accelerated.
