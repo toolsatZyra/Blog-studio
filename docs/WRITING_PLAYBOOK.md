@@ -80,6 +80,15 @@ Sources / references (links to any external claims).
 
 ---
 
+## 5b. Market adaptation (India · GCC · US)
+
+Zyra sells across India, the GCC, and the US, so the draft adapts to the target market(s) chosen in the inputs:
+- **Currency** — ₹ (INR; lakh/crore) for India, $ (USD) for US, AED/SAR for GCC. Lead with the **primary** (first-selected) market's currency; when referencing another selected market, use *its* currency. Never present one currency's number as another, never convert silently, and never invent figures.
+- **Spelling** — Indian/British English for India & GCC, American English for the US.
+- **Examples** — India: D2C/FMCG, Swiggy, JioCinema, IPL/festive moments. GCC: Careem/Noon/Talabat, Ramadan/Eid, UAE/KSA. US: US D2C, streaming, Super Bowl/seasonal retail.
+
+The `seoGeoAuditor` runs a **currency-market-match** check that flags any currency belonging to a *non-target* market (e.g. ₹ in a US-only post). `$` is never flagged (it's global and appears in Zyra's verified "$10M ad spend managed" proof point).
+
 ## 6. Zyra voice
 Cinematic **but genuinely useful**. Confident, first-person plural, specific. Short punchy declaratives mixed with longer flowing lines. Industry-shift framing ("this isn't a marginal improvement, it's a structural shift"). Occasional blockquote pull-quote. Indian market context (D2C, FMCG, fintech, OTT). Reads like a strategist/editor who knows the craft — not marketing filler, not an AI template. Tone is selectable per post (cinematic but useful · founder-led · expert editorial · simple and direct).
 

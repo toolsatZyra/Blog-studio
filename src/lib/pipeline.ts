@@ -44,7 +44,7 @@ export async function runWriting(inputs: Inputs, research: Research, selected: T
   const brief = briefGenerator(inputs, research, selected);
   const rawDraft = await blogGenerator(inputs, brief);
   const draft = await humanEditor(rawDraft);
-  const audit = seoGeoAuditor(draft, brief);
+  const audit = seoGeoAuditor(draft, brief, inputs);
   const exports = exporter(draft, brief, inputs);
   return { brief, draft, audit, exports };
 }

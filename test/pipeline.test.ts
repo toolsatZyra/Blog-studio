@@ -138,6 +138,32 @@ test('insertIntoBlogData throws if the array is missing', () => {
   assert.throws(() => insertIntoBlogData('const x = 1', 'lit'));
 });
 
+test('parseMarkets recognises India, GCC, US and keeps primary first', async () => {
+  const { parseMarkets } = await import('../src/lib/markets.ts');
+  const m = parseMarkets('US, India, GCC');
+  assert.deepEqual(m.map((x) => x.key), ['US', 'India', 'GCC']);
+  assert.equal(parseMarkets('Dubai, Saudi')[0].key, 'GCC');
+  assert.deepEqual(parseMarkets('Europe').map((x) => x.key), []);
+});
+
+test('marketGuidance builds primary-led guidance', async () => {
+  const { marketGuidance } = await import('../src/lib/markets.ts');
+  const g = marketGuidance('India, US');
+  assert.equal(g.primary?.key, 'India');
+  assert.ok(g.promptBlock.includes('Primary: India'));
+  assert.ok(/₹|INR/.test(g.promptBlock));
+});
+
+test('currencyMismatch flags non-target currency but not $ or in-market currency', async () => {
+  const { currencyMismatch, parseMarkets } = await import('../src/lib/markets.ts');
+  const us = parseMarkets('US');
+  assert.deepEqual(currencyMismatch('It costs ₹50 lakh for the film.', us).length > 0, true); // ₹ wrong for US
+  assert.deepEqual(currencyMismatch('It costs $50,000 for the film.', us), []); // $ fine for US
+  const india = parseMarkets('India');
+  assert.deepEqual(currencyMismatch('₹8L and our $10M ad spend managed.', india), []); // ₹ ok; $ never flagged
+  assert.ok(currencyMismatch('Priced in AED 20,000.', india).length > 0); // AED wrong for India-only
+});
+
 test('imageGenerator returns a deterministic mock SVG when no key is set', async () => {
   const { imageGenerator } = await import('../src/lib/modules/imageGenerator.ts');
   const a = await imageGenerator({ title: 'AI Brand Film Cost in India', slug: 'ai-brand-film-cost' });

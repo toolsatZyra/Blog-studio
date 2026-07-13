@@ -1,6 +1,7 @@
 import type { Inputs, Brief, Draft, DraftBlock } from '../types';
 import { getLLM } from '../providers';
 import { ZYRA_PROOF_POINTS } from '../zyraContext';
+import { marketGuidance } from '../markets';
 import { countWords } from '../util';
 
 const SYSTEM = `You are a senior content strategist writing for Zyra, India's AI Content Studio ("Where AI meets Cinema"). Write like a sharp human editor, not a template.
@@ -9,6 +10,7 @@ RULES:
 - Vary sentence length hard (mix very short and long sentences). Use contractions and active voice. Short paragraphs.
 - No banned phrases: "in today's fast-paced digital landscape", "unlock the power of", "revolutionize", "seamless", "game-changer", "delve", "leverage", "moreover", "in conclusion".
 - Lead each section with a direct, quotable answer, then expand. Question-style H2s where natural.
+- Adapt currency, spelling, and examples to the target market(s) you are given. Never mix currencies or present one currency's number as another; never convert without saying so.
 - Natural Zyra mentions, helpful (not salesy) CTA.
 Return Markdown only: ## for H2, ### for H3, > for a pull-quote, - for bullets, plain paragraphs otherwise. End with a "## FAQ" section of Q/A pairs (question as ### , answer as paragraph).`;
 
@@ -36,6 +38,7 @@ function buildPrompt(inputs: Inputs, brief: Brief): string {
     `Primary keyword: ${brief.primaryKeyword}`,
     `Audience: ${brief.targetReader}`,
     `Goal: ${inputs.goal}. Tone: ${inputs.tone}. Angle: ${brief.angle}`,
+    `Market adaptation:\n${marketGuidance(inputs.audience.geographies).promptBlock}`,
     `CTA to weave in (helpful, not salesy): ${inputs.cta}`,
     `Verified Zyra proof points you MAY cite: ${ZYRA_PROOF_POINTS.join('; ')}`,
     `Zyra context:\n${inputs.zyraContext}`,
@@ -48,11 +51,15 @@ function buildPrompt(inputs: Inputs, brief: Brief): string {
 // ── Deterministic (mock) draft ───────────────────────────────────────────────
 function buildMockBlocks(inputs: Inputs, brief: Brief): DraftBlock[] {
   const topic = brief.primaryKeyword;
+  const mkt = marketGuidance(inputs.audience.geographies);
+  const marketLabel = mkt.markets.length
+    ? mkt.markets.map((m) => m.label).join(', ')
+    : (inputs.audience.geographies || 'India');
   const blocks: DraftBlock[] = [];
   // Intro: direct answer in the first ~100 words, first-person, no hype.
   blocks.push({
     type: 'p',
-    text: `Here's the short version: ${topic} is changing how brands in ${inputs.audience.geographies || 'India'} plan content, and most teams still price it against the old model. We'll walk through what it actually means for ${inputs.audience.roles || 'marketers'}, where it helps, and where it doesn't.`,
+    text: `Here's the short version: ${topic} is changing how brands across ${marketLabel} plan content, and most teams still price it against the old model. We'll walk through what it actually means for ${inputs.audience.roles || 'marketers'}, where it helps, and where it doesn't.`,
   });
   blocks.push({
     type: 'p',

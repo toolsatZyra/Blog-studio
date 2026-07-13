@@ -1,9 +1,10 @@
 import type { Draft, Brief, ScoreCard } from '../types';
 import { buildCard, draftText, check } from './score';
 import { ZYRA_ENTITIES } from '../zyraContext';
+import { currencyMismatch, type Market } from '../markets';
 
 /** GEO/AEO scorecard. Rewards sourced claims + structure; flags unsupported stats. */
-export function geoChecks(draft: Draft, brief: Brief): ScoreCard {
+export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): ScoreCard {
   const text = draftText(draft);
   const first100 = text.split(/\s+/).slice(0, 100).join(' ');
   const h2s = draft.blocks.filter((b) => b.type === 'h2');
@@ -25,6 +26,7 @@ export function geoChecks(draft: Draft, brief: Brief): ScoreCard {
 
   // Unsupported-stats check: numbers that aren't Zyra proof points and have no nearby source.
   const unsupported = findUnsupportedStats(text);
+  const wrongCurrency = currencyMismatch(text, markets);
 
   return buildCard([
     check('direct-answer', 'Direct answer in first ~100 words',
@@ -48,6 +50,13 @@ export function geoChecks(draft: Draft, brief: Brief): ScoreCard {
     check('no-unsupported-stats', 'No unsupported statistics',
       unsupported.length === 0 ? 'pass' : 'fail',
       unsupported.length ? `Unsourced numbers: ${unsupported.slice(0, 3).join(', ')} — add a source or remove.` : 'All numbers are sourced or Zyra proof points.'),
+    check('currency-market-match', 'Currency matches target market(s)',
+      markets.length === 0 ? 'unknown' : wrongCurrency.length === 0 ? 'pass' : 'fail',
+      markets.length === 0
+        ? 'No recognised target market — currency not checked.'
+        : wrongCurrency.length
+          ? `Uses currency for a non-target market: ${wrongCurrency.join(', ')}. Match ${markets.map((m) => m.currency).join(' / ')}.`
+          : `Currency fits ${markets.map((m) => m.label).join(', ')}.`),
   ]);
 }
 
