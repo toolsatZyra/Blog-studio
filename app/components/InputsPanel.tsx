@@ -28,7 +28,7 @@ export function InputsPanel({
       <div className="row">
         <div>
           <label>Geographies</label>
-          <input value={inputs.audience.geographies} onChange={(e) => upAud({ geographies: e.target.value })} placeholder="India" />
+          <input value={inputs.audience.geographies} onChange={(e) => upAud({ geographies: e.target.value })} placeholder="India, GCC, US" />
         </div>
         <div>
           <label>Roles</label>

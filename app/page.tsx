@@ -15,7 +15,7 @@ import { ExportTab } from './components/ExportTab';
 const DEFAULT_INPUTS: Inputs = {
   topic: '',
   zyraContext: DEFAULT_ZYRA_CONTEXT,
-  audience: { industries: 'D2C, FMCG, fintech', geographies: 'India', roles: 'CMOs, brand managers' },
+  audience: { industries: 'D2C, FMCG, fintech', geographies: 'India, GCC, US', roles: 'CMOs, brand managers' },
   goal: 'thought leadership',
   tone: 'cinematic but useful',
   wordCount: 1400,
