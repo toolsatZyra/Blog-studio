@@ -1,0 +1,25 @@
+{
+  "name": "zyra-blog-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal tool that automates Zyra's SEO/GEO/AEO blog writing workflow.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.7",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "tsx": "^4.23.1",
+    "typescript": "5.7.3"
+  }
+}

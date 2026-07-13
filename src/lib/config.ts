@@ -1,0 +1,41 @@
+// Reads env and decides which providers are live. All keys optional → mock.
+
+export const env = {
+  openaiKey: process.env.OPENAI_API_KEY || '',
+  openaiModelCheap: process.env.OPENAI_MODEL_CHEAP || 'gpt-4o-mini',
+  anthropicKey: process.env.ANTHROPIC_API_KEY || '',
+  claudeModelWriter: process.env.CLAUDE_MODEL_WRITER || 'claude-sonnet-5',
+  llmCheapProvider: process.env.LLM_CHEAP_PROVIDER || 'openai',
+  llmWriterProvider: process.env.LLM_WRITER_PROVIDER || 'claude',
+
+  googleAds: {
+    developerToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '',
+    clientId: process.env.GOOGLE_ADS_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET || '',
+    refreshToken: process.env.GOOGLE_ADS_REFRESH_TOKEN || '',
+    customerId: process.env.GOOGLE_ADS_CUSTOMER_ID || '',
+    loginCustomerId: process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '',
+  },
+
+  dataForSeo: {
+    login: process.env.DATAFORSEO_LOGIN || '',
+    password: process.env.DATAFORSEO_PASSWORD || '',
+  },
+  serpApiKey: process.env.SERPAPI_KEY || '',
+
+  apifyToken: process.env.APIFY_TOKEN || '',
+  apifyRedditActor: process.env.APIFY_REDDIT_ACTOR || 'trudax~reddit-scraper-lite',
+
+  twitterApiKey: process.env.TWITTERAPI_KEY || '',
+};
+
+export const isLive = {
+  googleAds: () =>
+    !!(env.googleAds.developerToken && env.googleAds.refreshToken && env.googleAds.customerId),
+  dataForSeo: () => !!(env.dataForSeo.login && env.dataForSeo.password),
+  serpApi: () => !!env.serpApiKey,
+  apify: () => !!env.apifyToken,
+  twitterApi: () => !!env.twitterApiKey,
+  openai: () => !!env.openaiKey,
+  claude: () => !!env.anthropicKey,
+};
