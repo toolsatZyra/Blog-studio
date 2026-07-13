@@ -7,7 +7,8 @@ import { topicScorer, SCORE_WEIGHTS } from '../src/lib/modules/topicScorer.ts';
 import { exporter } from '../src/lib/modules/exporter.ts';
 import { humanEditor } from '../src/lib/modules/humanEditor.ts';
 import { slugify } from '../src/lib/util.ts';
-import type { Inputs, Research, Draft, Brief } from '../src/lib/types.ts';
+import { serializeBlogPost, insertIntoBlogData } from '../src/lib/modules/publisher.ts';
+import type { Inputs, Research, Draft, Brief, BlogPostObject } from '../src/lib/types.ts';
 
 const inputs: Inputs = {
   topic: 'AI brand film cost in India',
@@ -108,4 +109,31 @@ test('humanEditor strips banned phrases and adds contractions', async () => {
   const text = edited.blocks.map((b) => b.text ?? '').join(' ').toLowerCase();
   assert.ok(!text.includes('it is worth noting'));
   assert.ok(!text.includes(' we are ')); // contracted to we're
+});
+
+const blogPost: BlogPostObject = {
+  slug: 'ai-brand-film-cost', title: 'AI Brand Film Cost',
+  excerpt: 'What it costs.', body: [{ type: 'p', text: 'It "depends".' }, { type: 'h2', text: 'Cost' }],
+  date: 'July 2026', readTime: '4 min read', category: 'Industry', poster: '/posters/REPLACE-ME.webp',
+};
+
+test('serializeBlogPost emits a valid TS literal with escaped strings', () => {
+  const lit = serializeBlogPost(blogPost);
+  assert.ok(lit.includes('slug: "ai-brand-film-cost"'));
+  assert.ok(lit.includes('type: "p"'));
+  // quotes inside text must be escaped by JSON.stringify
+  assert.ok(lit.includes('\\"depends\\"'));
+});
+
+test('insertIntoBlogData inserts as the first array element', () => {
+  const file = 'export const ALL_POSTS: BlogPost[] = [\n  { slug: "old" },\n]\n';
+  const out = insertIntoBlogData(file, serializeBlogPost(blogPost));
+  const idxNew = out.indexOf('ai-brand-film-cost');
+  const idxOld = out.indexOf('slug: "old"');
+  assert.ok(idxNew > 0 && idxNew < idxOld); // new post appears before the old one
+  assert.ok(out.includes('export const ALL_POSTS: BlogPost[] = [')); // declaration intact
+});
+
+test('insertIntoBlogData throws if the array is missing', () => {
+  assert.throws(() => insertIntoBlogData('const x = 1', 'lit'));
 });

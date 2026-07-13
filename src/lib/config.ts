@@ -27,6 +27,14 @@ export const env = {
   apifyRedditActor: process.env.APIFY_REDDIT_ACTOR || 'trudax~reddit-scraper-lite',
 
   twitterApiKey: process.env.TWITTERAPI_KEY || '',
+
+  // Publishing: opens a PR on the thezyra.in repo appending to blog-data.ts.
+  publish: {
+    token: process.env.GITHUB_TOKEN || '',
+    repo: process.env.PUBLISH_REPO || 'toolsatZyra/ZyraUpdated',
+    baseBranch: process.env.PUBLISH_BASE_BRANCH || 'master',
+    blogDataPath: process.env.PUBLISH_BLOG_DATA_PATH || 'src/lib/blog-data.ts',
+  },
 };
 
 export const isLive = {
@@ -38,4 +46,5 @@ export const isLive = {
   twitterApi: () => !!env.twitterApiKey,
   openai: () => !!env.openaiKey,
   claude: () => !!env.anthropicKey,
+  publish: () => !!env.publish.token,
 };

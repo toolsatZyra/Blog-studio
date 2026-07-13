@@ -90,9 +90,11 @@ Every source is an adapter behind a registry; a missing key silently uses the mo
 - **State:** one `RunState` object per session, persisted to `localStorage`.
 - **Resilience:** every stage wrapped — partial results always render; live-provider failure degrades to mock with a badge; no hard crashes.
 
-## 10. Out of scope (MVP) — noted, bolt-on later
+## 10. Publishing & out of scope
 
-Auto-publishing a PR into the thezyra.in repo · hero/OG image generation · scheduled/batch multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework.
+**Built:** PR-based publishing — the Export tab's "Open pull request" button appends the `BlogPost` to `blog-data.ts` on a new branch of `toolsatZyra/ZyraUpdated` and opens a PR (never commits to the default branch; requires `GITHUB_TOKEN`).
+
+**Out of scope (bolt-on later):** hero/OG image generation · scheduled/batch multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework.
 
 ## 11. Success criteria
 

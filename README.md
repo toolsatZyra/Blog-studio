@@ -36,9 +36,19 @@ npm test             # unit tests (tsx + node:test)
 4. **Brief** — titles, meta, slug, keywords, question-led outline, internal links to Zyra service pages, FAQ, featured-snippet answer, GEO/AEO answer blocks.
 5. **Draft** — `blogGenerator` writes the draft, then a separate `humanEditor` pass rewrites it for human rhythm (burstiness, contractions, banned-phrase removal) **without changing facts**.
 6. **SEO/GEO Checklist** — two separate scores (SEO + GEO/AEO) with fixes, a human-voice gate, and a **Publishing preflight** (robots.txt / sitemap / AI-crawler access / schema on the live site).
-7. **Export** — Markdown, HTML, meta tags, FAQ JSON-LD, blog brief JSON, and **CMS-ready copy** (a `BlogPost` object that pastes into thezyra.in's `src/lib/blog-data.ts`).
+7. **Export** — Markdown, HTML, meta tags, FAQ JSON-LD, blog brief JSON, **CMS-ready copy** (a `BlogPost` object that pastes into thezyra.in's `src/lib/blog-data.ts`), and a **Publish → open pull request** button (see below).
 
 Everything persists to `localStorage`, so you can close the tab and resume.
+
+## Publishing to thezyra.in
+
+The Export tab has an **"Open pull request →"** button. With a `GITHUB_TOKEN` set, it:
+1. reads `src/lib/blog-data.ts` on the target repo's default branch,
+2. inserts the generated `BlogPost` as the newest entry in `ALL_POSTS`,
+3. commits it to a fresh `blog/<slug>-<id>` branch, and
+4. opens a **pull request** — and returns the PR link.
+
+It **never commits to the default branch** — nothing goes live until you review, swap the placeholder poster, and merge (Vercel then deploys). Defaults target `toolsatZyra/ZyraUpdated` (`master`, `src/lib/blog-data.ts`); override via `PUBLISH_REPO` / `PUBLISH_BASE_BRANCH` / `PUBLISH_BLOG_DATA_PATH`. Without a token the button returns a clear "not configured" message.
 
 ---
 
@@ -54,6 +64,7 @@ All keys are **optional** — missing = mock. See [`docs/API_RECOMMENDATIONS.md`
 | X questions | twitterapi.io | `TWITTERAPI_KEY` |
 | Cheap LLM steps | OpenAI | `OPENAI_API_KEY` |
 | Writing (draft + polish) | Claude Sonnet 5 | `ANTHROPIC_API_KEY` |
+| Publish (open PR) | GitHub | `GITHUB_TOKEN` |
 
 **Add first:** `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` (real writing) and `DATAFORSEO_*` (real SERP). These three unblock most of the tool with almost no setup.
 **Add when ready:** `GOOGLE_ADS_*` (needs an approved developer token + OAuth refresh token — the slow one; returns ad competition + volume ranges, not SEO difficulty), `APIFY_TOKEN`, `TWITTERAPI_KEY`.
@@ -96,4 +107,4 @@ test/                 unit tests
 
 ## Not built yet (bolt-on later)
 
-Auto-publishing a PR into the thezyra.in repo · hero/OG image generation · scheduled multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework.
+Hero/OG image generation · scheduled multi-post runs · SQLite/multi-user persistence · auth. The pipeline is structured so these add on without rework. *(PR-based publishing to thezyra.in is now built — see above.)*
