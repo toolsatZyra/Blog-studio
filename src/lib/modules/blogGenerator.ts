@@ -12,7 +12,8 @@ RULES:
 - Lead each section with a direct, quotable answer, then expand. Question-style H2s where natural.
 - Adapt currency, spelling, and examples to the target market(s) you are given. Never mix currencies or present one currency's number as another; never convert without saying so.
 - Natural Zyra mentions, helpful (not salesy) CTA.
-Return Markdown only: ## for H2, ### for H3, > for a pull-quote, - for bullets, plain paragraphs otherwise. End with a "## FAQ" section of Q/A pairs (question as ### , answer as paragraph).`;
+- Use a Markdown table for any "vs"/comparison content.
+OUTPUT: Return ONLY the article body in Markdown — no preamble, no sign-off, no code fences. Do NOT repeat the title; start with the opening paragraph. Use ## for H2, ### for H3, > for a pull-quote, - for bullets, standard | a | b | tables, plain paragraphs otherwise. End with a "## FAQ" section of Q/A pairs (question as ###, answer as a paragraph).`;
 
 export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft> {
   const llm = getLLM();
@@ -25,8 +26,14 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
         maxTokens: 4000,
         temperature: 0.85,
       });
-      if (md.trim()) return finalize(parseMarkdown(md, brief), 'live');
-    } catch { /* fall back to deterministic draft */ }
+      if (md.trim()) return finalize(parseMarkdown(md), 'live');
+      throw new Error('Claude returned an empty response.');
+    } catch (e) {
+      // Surface the failure instead of silently pretending it worked.
+      const draft = finalize(buildMockBlocks(inputs, brief), 'mock');
+      draft.warnings = [`Live writer (Claude) failed — showing mock draft instead. ${(e as Error).message}`];
+      return draft;
+    }
   }
   return finalize(buildMockBlocks(inputs, brief), 'mock');
 }
@@ -193,20 +200,39 @@ function buildMockBlocks(inputs: Inputs, brief: Brief): DraftBlock[] {
 }
 
 // ── Markdown → blocks (live path) ────────────────────────────────────────────
-function parseMarkdown(md: string, brief: Brief): DraftBlock[] {
-  const lines = md.split('\n');
+function parseTableRow(line: string): string[] {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+}
+const isTableSep = (line: string) => /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line.trim());
+const isTableRow = (line: string) => /^\s*\|.*\|\s*$/.test(line);
+
+export function parseMarkdown(md: string): DraftBlock[] {
+  // Strip code fences and any accidental preamble/sign-off wrapper.
+  const cleaned = md.replace(/```[a-z]*\n?/gi, '').trim();
+  const lines = cleaned.split('\n');
   const blocks: DraftBlock[] = [];
   let list: string[] | null = null;
   const flush = () => { if (list && list.length) blocks.push({ type: 'ul', items: list }); list = null; };
-  for (const raw of lines) {
-    const line = raw.trimEnd();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trimEnd();
     if (!line.trim()) { flush(); continue; }
+    // Markdown table: header row, separator row, then data rows.
+    if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+      flush();
+      const headers = parseTableRow(line);
+      const rows: string[][] = [];
+      i += 2;
+      while (i < lines.length && isTableRow(lines[i])) { rows.push(parseTableRow(lines[i])); i++; }
+      i--;
+      blocks.push({ type: 'table', table: { headers, rows } });
+      continue;
+    }
     if (/^###\s+/.test(line)) { flush(); blocks.push({ type: 'h3', text: line.replace(/^###\s+/, '') }); }
     else if (/^##\s+/.test(line)) { flush(); blocks.push({ type: 'h2', text: line.replace(/^##\s+/, '') }); }
     else if (/^#\s+/.test(line)) { flush(); blocks.push({ type: 'h2', text: line.replace(/^#\s+/, '') }); }
     else if (/^>\s?/.test(line)) { flush(); blocks.push({ type: 'blockquote', text: line.replace(/^>\s?/, '') }); }
     else if (/^[-*]\s+/.test(line)) { (list ??= []).push(line.replace(/^[-*]\s+/, '')); }
-    else { flush(); blocks.push({ type: 'p', text: line.trim() }); }
+    else { flush(); blocks.push({ type: 'p', text: stripInlineMd(line.trim()) }); }
   }
   flush();
   return blocks;
@@ -239,3 +265,12 @@ function finalize(blocks: DraftBlock[], mode: 'mock' | 'live'): Draft {
 }
 
 function stripQ(s: string) { return s.replace(/\?+$/, '').trim(); }
+// Strip inline markdown emphasis + links the CMS renders as plain text.
+function stripInlineMd(s: string): string {
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/(^|[^*])\*([^*]+)\*/g, '$1$2')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
+}

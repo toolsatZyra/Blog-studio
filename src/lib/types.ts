@@ -165,6 +165,7 @@ export interface Draft {
   sourceNeededCount: number; // how many [source needed] tags remain
   mode: SourceMode;
   appliedRules?: string[]; // humanizer rules that fired
+  warnings?: string[]; // e.g. a live LLM call failed and fell back to mock
 }
 
 export type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';

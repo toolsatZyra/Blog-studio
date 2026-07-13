@@ -40,6 +40,22 @@ npm test             # unit tests (tsx + node:test)
 
 Everything persists to `localStorage`, so you can close the tab and resume.
 
+## Testing the live Claude writer
+
+The draft is written by **Claude Sonnet** when a key is present; otherwise a coherent mock stands in. To test the live path:
+
+1. Add your key to `.env` (never paste it in chat):
+   ```bash
+   ANTHROPIC_API_KEY=sk-ant-...
+   CLAUDE_MODEL_WRITER=claude-sonnet-5   # override if the id differs for your account
+   OPENAI_API_KEY=sk-...                 # optional — cheap steps (expansion/clustering)
+   ```
+2. Restart the server (`npm run build && npm start`, or `npm run dev`).
+3. In the sidebar, click **"Check writer connection"** — it pings the API and reports `live ✓ (model)` or the exact error (bad key / wrong model id) *before* you run a generation.
+4. Run a topic through to the **Draft** tab. The header badge reads `live` (not `mock`), and Claude's prose is parsed into clean blocks (tables, FAQ, no markdown artifacts). The humanizer + audit still run on top.
+
+If a live call fails mid-generation, the Draft tab shows a **warning banner** with the error and falls back to the mock — it never silently pretends the key worked.
+
 ## Publishing to thezyra.in
 
 The Export tab has a **"Generate hero image"** button (OpenAI `gpt-image-1` when a key is set; a deterministic branded SVG sample otherwise) and an **"Open pull request →"** button. With a `GITHUB_TOKEN` set, publish:

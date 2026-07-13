@@ -8,6 +8,7 @@ export function DraftTab({ draft, brief, inputs }: { draft?: Draft; brief?: Brie
   const markets = inputs ? parseMarkets(inputs.audience.geographies) : [];
   return (
     <div>
+      {draft.warnings?.map((w, i) => <div key={i} className="error">{w}</div>)}
       <div className="selected-bar">
         <Badge mode={draft.mode} />
         <span>{draft.wordCount} words</span>

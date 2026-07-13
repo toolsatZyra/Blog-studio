@@ -234,6 +234,22 @@ test('cleaned mock pipeline produces no duplicates or placeholders', async () =>
   assert.equal(findPlaceholders(draft.blocks.map((b) => b.text ?? '').join(' ')).length, 0);
 });
 
+test('parseMarkdown handles fences, tables, and inline bold (live-path parsing)', async () => {
+  const { parseMarkdown } = await import('../src/lib/modules/blogGenerator.ts');
+  const md = [
+    '```markdown', '## What is it?', 'A **bold** claim and a [link](https://x.com).',
+    '', '## How the options compare', '| Approach | Speed |', '| --- | --- |',
+    '| Traditional | Weeks |', '| AI-native | Days |', '```',
+  ].join('\n');
+  const blocks = parseMarkdown(md);
+  const table = blocks.find((b) => b.type === 'table');
+  assert.ok(table, 'table parsed');
+  assert.deepEqual(table!.table!.headers, ['Approach', 'Speed']);
+  assert.equal(table!.table!.rows.length, 2);
+  const p = blocks.find((b) => b.type === 'p');
+  assert.equal(p!.text, 'A bold claim and a link.'); // bold + link stripped, no fence
+});
+
 test('imageGenerator returns a deterministic mock SVG when no key is set', async () => {
   const { imageGenerator } = await import('../src/lib/modules/imageGenerator.ts');
   const a = await imageGenerator({ title: 'AI Brand Film Cost in India', slug: 'ai-brand-film-cost' });

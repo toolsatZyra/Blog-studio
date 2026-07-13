@@ -52,6 +52,8 @@ export default function Home() {
   const [writing, setWriting] = useState(false);
   const [error, setError] = useState('');
   const [hydrated, setHydrated] = useState(false);
+  const [llmCheck, setLlmCheck] = useState<string>();
+  const [checking, setChecking] = useState(false);
 
   // Load persisted run.
   useEffect(() => {
@@ -109,6 +111,18 @@ export default function Home() {
     setWriting(false);
   }
 
+  async function checkLlm() {
+    setChecking(true); setLlmCheck(undefined);
+    try {
+      const res = await fetch('/api/llm-check', { method: 'POST' });
+      const d = await res.json();
+      const fmt = (r: { configured: boolean; ok?: boolean; model: string; error?: string; note?: string }) =>
+        !r.configured ? `mock (no key)` : r.ok ? `live ✓ (${r.model})` : `ERROR (${r.model}): ${r.error}`;
+      setLlmCheck(`Writer/Claude: ${fmt(d.writer)}\nCheap/OpenAI: ${fmt(d.cheap)}`);
+    } catch (e) { setLlmCheck((e as Error).message); }
+    setChecking(false);
+  }
+
   function reset() {
     setResearch(undefined); setCandidates(undefined); setSelected(undefined);
     setBrief(undefined); setDraft(undefined); setAudit(undefined); setExportsData(undefined);
@@ -127,6 +141,10 @@ export default function Home() {
             ))}
           </div>
         )}
+        <button className="btn secondary small" style={{ marginBottom: 8 }} onClick={checkLlm} disabled={checking}>
+          {checking ? <><span className="spinner" /> Checking…</> : 'Check writer connection'}
+        </button>
+        {llmCheck && <pre className="export" style={{ maxHeight: 120, marginBottom: 10, whiteSpace: 'pre-wrap' }}>{llmCheck}</pre>}
         <InputsPanel inputs={inputs} setInputs={setInputs} onRun={runResearch} loading={researching} />
       </aside>
 
