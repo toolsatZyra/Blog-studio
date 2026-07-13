@@ -168,7 +168,7 @@ export default function Home() {
         {tab === 'research' && <ResearchTab research={research} />}
         {tab === 'topics' && <RecommendedTopicsTab candidates={candidates} selected={selected} onSelect={selectTopic} loading={writing} />}
         {tab === 'brief' && <BriefTab brief={brief} />}
-        {tab === 'draft' && <DraftTab draft={draft} brief={brief} />}
+        {tab === 'draft' && <DraftTab draft={draft} brief={brief} inputs={inputs} />}
         {tab === 'checklist' && <ChecklistTab audit={audit} />}
         {tab === 'export' && <ExportTab exports={exportsData} brief={brief} inputs={inputs} />}
       </main>

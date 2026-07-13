@@ -1,14 +1,19 @@
 'use client';
-import type { Draft, Brief } from '@/lib/types';
+import type { Draft, Brief, Inputs } from '@/lib/types';
+import { parseMarkets } from '@/lib/markets';
 import { Badge } from './ui';
 
-export function DraftTab({ draft, brief }: { draft?: Draft; brief?: Brief }) {
+export function DraftTab({ draft, brief, inputs }: { draft?: Draft; brief?: Brief; inputs?: Inputs }) {
   if (!draft) return <div className="empty">Choose a topic to generate the blog draft.</div>;
+  const markets = inputs ? parseMarkets(inputs.audience.geographies) : [];
   return (
     <div>
       <div className="selected-bar">
         <Badge mode={draft.mode} />
         <span>{draft.wordCount} words</span>
+        {markets.length > 0 && (
+          <span className="muted">· writing for: {markets.map((m) => m.label).join(', ')}</span>
+        )}
         {draft.sourceNeededCount > 0 && <span className="muted">· {draft.sourceNeededCount} [source needed] tag(s) to resolve</span>}
       </div>
       <div className="card article">
