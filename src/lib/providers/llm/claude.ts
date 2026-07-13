@@ -11,10 +11,11 @@ export async function generateClaude(args: {
       'x-api-key': env.anthropicKey,
       'anthropic-version': '2023-06-01',
     },
+    // NOTE: `temperature` is omitted — newer Claude models (e.g. Sonnet 5)
+    // reject it as deprecated. Default sampling is fine for this use.
     body: JSON.stringify({
       model: env.claudeModelWriter,
       max_tokens: args.maxTokens ?? 4000,
-      temperature: args.temperature ?? 0.8,
       system: args.system,
       messages: [{ role: 'user', content: args.prompt }],
     }),
