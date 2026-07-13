@@ -62,17 +62,18 @@ export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): S
 
 const PROOF_NUMBERS = ['1,000', '1000', '50m', '50 m', '2,000', '2000', '$10m', '$10 m', '60m', '60 m'];
 
-// Only STATISTIC-shaped numbers count: percentages, currency amounts, and
-// magnitude/multiplier figures. Plain counts and durations ("120 seconds",
-// "three cuts", "week one") are not statistics and are never flagged.
+// Flags only genuinely fabrication-prone figures: percentages ("73% of CMOs")
+// and multipliers ("3.2x"). Prices, currency amounts, counts, and durations are
+// legitimate (a brand quoting its own price is not a fabricated statistic) and
+// are never flagged here — the [source-needed] placeholder check covers the rest.
 function findUnsupportedStats(text: string): string[] {
   const out: string[] = [];
-  const re = /(\d[\d,]*\.?\d*\s?%)|([₹$]\s?\d[\d,]*\.?\d*\s?(?:m|k|bn|cr|million|billion|crore|lakh)?\+?)|(\d[\d,]*\.?\d*\s?(?:million|billion|crore|lakh)\+?)|(\d+(?:\.\d+)?\s?[x×])/gi;
+  const re = /(\d[\d,]*\.?\d*\s?%)|(\d+(?:\.\d+)?\s?[x×]\b)/gi;
   const matches = text.match(re) ?? [];
   const sentencesArr = text.split(/(?<=[.!?])\s+/);
   for (const m of matches) {
     const token = m.trim().toLowerCase().replace(/\s+/g, ' ');
-    if (PROOF_NUMBERS.some((p) => token.includes(p))) continue; // Zyra proof point
+    if (PROOF_NUMBERS.some((p) => token.includes(p))) continue;
     const sent = sentencesArr.find((s) => s.toLowerCase().includes(token)) ?? '';
     if (/\[source needed\]|source:|according to|https?:\/\//i.test(sent)) continue;
     out.push(m.trim());
