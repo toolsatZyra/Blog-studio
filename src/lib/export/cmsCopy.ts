@@ -1,16 +1,13 @@
 import type { Draft, Brief, Inputs, BlogPostObject } from '../types';
+import { categoryByGoal } from '../modules/categoryClassifier';
 
-const CATEGORY_BY_GOAL: Record<string, string> = {
-  awareness: 'Industry',
-  'lead generation': 'Performance',
-  'thought leadership': 'Industry',
-  comparison: 'Playbook',
-  educational: 'Playbook',
-};
-
-/** Build the thezyra.in `BlogPost` object. `today` is injectable for stable tests. */
+/**
+ * Build the thezyra.in `BlogPost` object. `today` is injectable for stable tests.
+ * `category` is the resolved site category (from the LLM classifier); when
+ * omitted it falls back to the coarse goal map.
+ */
 export function toBlogPost(
-  draft: Draft, brief: Brief, inputs: Inputs, today: Date = new Date(),
+  draft: Draft, brief: Brief, inputs: Inputs, today: Date = new Date(), category?: string,
 ): BlogPostObject {
   const body: BlogPostObject['body'] = [];
   for (const b of draft.blocks) {
@@ -53,7 +50,7 @@ export function toBlogPost(
     body,
     date: month,
     readTime,
-    category: CATEGORY_BY_GOAL[inputs.goal] ?? 'Industry',
+    category: category ?? categoryByGoal(inputs.goal),
     poster: '/posters/REPLACE-ME.webp',
   };
 }

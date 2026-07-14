@@ -5,6 +5,7 @@ import { keywordResearch } from './modules/keywordResearch';
 import { serpResearch } from './modules/serpResearch';
 import { topicScorer } from './modules/topicScorer';
 import { topicSynthesizer } from './modules/topicSynthesizer';
+import { classifyCategory } from './modules/categoryClassifier';
 import { briefGenerator } from './modules/briefGenerator';
 import { blogGenerator } from './modules/blogGenerator';
 import { humanizer } from './modules/humanizer';
@@ -47,6 +48,7 @@ export async function runWriting(inputs: Inputs, research: Research, selected: T
   const rawDraft = await blogGenerator(inputs, brief);
   const draft = await humanizer(rawDraft);
   const audit = seoGeoAuditor(draft, brief, inputs);
-  const exports = exporter(draft, brief, inputs);
+  const category = await classifyCategory(inputs, brief);
+  const exports = exporter(draft, brief, inputs, undefined, category);
   return { brief, draft, audit, exports };
 }
