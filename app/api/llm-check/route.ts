@@ -16,7 +16,10 @@ export async function POST() {
     const model = role === 'writer' ? env.claudeModelWriter : env.openaiModelCheap;
     if (!configured) { out[role] = { configured: false, model, note: 'No key set — this role uses the mock.' }; continue; }
     try {
-      const reply = await llm.generate({ role, system: 'Reply with the single word OK.', prompt: 'OK', maxTokens: 5, temperature: 0 });
+      // maxTokens must leave room for a reasoning/thinking block: Sonnet 5 can
+      // spend a tiny budget entirely on a `thinking` block and emit no text,
+      // which would make this health check flap. 256 comfortably fits both.
+      const reply = await llm.generate({ role, system: 'Reply with the single word OK.', prompt: 'OK', maxTokens: 256, temperature: 0 });
       out[role] = { configured: true, ok: !!reply.trim(), model, sample: reply.trim().slice(0, 40) };
     } catch (e) {
       out[role] = { configured: true, ok: false, model, error: (e as Error).message.slice(0, 300) };

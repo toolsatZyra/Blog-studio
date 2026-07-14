@@ -254,6 +254,7 @@ export interface SerpProvider {
     paa: string[];
     related: string[];
     autocomplete: string[];
+    reddit: DiscoveredQuestion[]; // Reddit threads mined from the organic results
   }>;
 }
 

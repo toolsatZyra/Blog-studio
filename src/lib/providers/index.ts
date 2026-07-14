@@ -6,11 +6,12 @@ import type {
   KeywordProvider, SerpProvider, SocialProvider, KeywordMetric,
   DiscoveredQuestion, SourceMode,
 } from '../types';
-import { isLive } from '../config';
+import { isLive, env } from '../config';
 import {
   mockKeywordProvider, mockSerpProvider, mockRedditProvider, mockXProvider,
 } from './mock';
 import { dataForSeoSerpProvider } from './dataforseo';
+import { redditJsonProvider } from './reddit';
 import { apifyRedditProvider } from './apify';
 import { twitterApiProvider } from './twitterapi';
 import { googleAdsKeywordProvider } from './googleads';
@@ -46,7 +47,17 @@ export async function getSerp(query: string): Promise<Called<Awaited<ReturnType<
 }
 
 export async function getRedditQuestions(topic: string): Promise<Called<DiscoveredQuestion[]>> {
-  if (isLive.apify()) {
+  // Primary: free Reddit search JSON (fast, no key, no credit).
+  try {
+    const data = await redditJsonProvider.questions(topic);
+    if (data.length) return { data, mode: 'live' };
+    console.warn('[reddit-json] returned no results');
+  } catch (e) {
+    console.warn('[reddit-json] fell back:', (e as Error).message);
+  }
+  // Optional deep fallback: the heavy Apify actor. Off by default — it's slow
+  // and burns credit — enable with REDDIT_DEEP_FALLBACK=1.
+  if (env.redditDeepFallback && isLive.apify()) {
     try { return { data: await apifyRedditProvider.questions(topic), mode: 'live' }; }
     catch (e) { console.warn('[apify] fell back to mock:', (e as Error).message); }
   }
@@ -66,7 +77,8 @@ export function providerStatus(): Record<string, SourceMode> {
   return {
     keywords: isLive.googleAds() ? 'live' : 'mock',
     serp: isLive.dataForSeo() ? 'live' : 'mock',
-    reddit: isLive.apify() ? 'live' : 'mock',
+    reddit: 'live', // free Reddit search JSON, no key required
+
     x: isLive.twitterApi() ? 'live' : 'mock',
     writer: isLive.claude() ? 'live' : 'mock',
     cheap: isLive.openai() ? 'live' : 'mock',

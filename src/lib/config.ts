@@ -27,6 +27,9 @@ export const env = {
 
   apifyToken: process.env.APIFY_TOKEN || '',
   apifyRedditActor: process.env.APIFY_REDDIT_ACTOR || 'trudax~reddit-scraper-lite',
+  // Reddit questions default to the free Reddit search JSON. The heavy Apify
+  // actor is a slow, credit-burning deep fallback — only used when this is '1'.
+  redditDeepFallback: process.env.REDDIT_DEEP_FALLBACK === '1',
 
   twitterApiKey: process.env.TWITTERAPI_KEY || '',
 

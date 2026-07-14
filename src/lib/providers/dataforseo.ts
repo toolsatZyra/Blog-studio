@@ -1,4 +1,4 @@
-import type { SerpProvider } from '../types';
+import type { SerpProvider, DiscoveredQuestion } from '../types';
 import { env } from '../config';
 
 // DataForSEO SERP (Google Organic, live) — returns organic + PAA + related.
@@ -32,6 +32,22 @@ export const dataForSeoSerpProvider: SerpProvider = {
     const related = items
       .filter((i: { type: string }) => i.type === 'related_searches')
       .flatMap((i: { items?: string[] }) => i.items ?? []);
-    return { organic, paa, related, autocomplete: related.slice(0, 6) };
+    // Mine Reddit threads from the full organic list (not just the top 6) — these
+    // are the Reddit discussions Google ranks for the query, so they're already
+    // relevance-filtered. Prefer question-shaped titles.
+    const reddit: DiscoveredQuestion[] = items
+      .filter((i: { type: string; url?: string; domain?: string }) =>
+        i.type === 'organic' &&
+        (/(^|\.)reddit\.com/.test(i.domain ?? '') || (i.url ?? '').includes('reddit.com')))
+      .map((i: { title?: string; url?: string; rank_absolute?: number }, idx: number): DiscoveredQuestion | null => {
+        const text = (i.title ?? '').replace(/\s+/g, ' ').trim();
+        if (!text) return null;
+        return { text, source: 'reddit', mode: 'live', url: i.url, rank: i.rank_absolute ?? idx + 1 };
+      })
+      .filter((q: DiscoveredQuestion | null): q is DiscoveredQuestion => q !== null)
+      .sort((a: DiscoveredQuestion, b: DiscoveredQuestion) =>
+        Number(b.text.includes('?')) - Number(a.text.includes('?')))
+      .slice(0, 6);
+    return { organic, paa, related, autocomplete: related.slice(0, 6), reddit };
   },
 };

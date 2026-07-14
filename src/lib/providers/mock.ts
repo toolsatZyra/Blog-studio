@@ -72,6 +72,7 @@ export const mockSerpProvider: SerpProvider = {
       related: RELATED_TEMPLATES.slice(0, seededInt(query + 'rel', 5, 8)).map((p) => clean(p.replace(/\{t\}/g, t))),
       autocomplete: [`${t} india`, `${t} cost`, `${t} for brands`, `ai ${t}`, `${t} agency`].map(clean).slice(
         0, seededInt(query + 'ac', 3, 5)),
+      reddit: socialQuestions(query, 'reddit'),
     };
   },
 };

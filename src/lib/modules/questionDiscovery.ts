@@ -1,9 +1,10 @@
 import type { Inputs, DiscoveredQuestion, SourceMode } from '../types';
-import { getSerp, getRedditQuestions, getXQuestions } from '../providers';
+import { getSerp, getXQuestions } from '../providers';
 
 /**
- * Gathers questions from PAA + autocomplete (SERP), Reddit (Apify), X (twitterapi),
- * competitor URLs, and the user's manual notes/CSV. Returns questions + per-source modes.
+ * Gathers questions from PAA + autocomplete (SERP), Reddit (mined from the same
+ * SERP call — the reddit.com threads Google ranks), X (twitterapi), competitor
+ * URLs, and the user's manual notes/CSV. Returns questions + per-source modes.
  */
 export async function questionDiscovery(inputs: Inputs): Promise<{
   questions: DiscoveredQuestion[];
@@ -11,11 +12,14 @@ export async function questionDiscovery(inputs: Inputs): Promise<{
   modes: Record<string, SourceMode>;
 }> {
   const topic = inputs.topic.trim();
-  const [serp, reddit, x] = await Promise.all([
+  const [serp, x] = await Promise.all([
     getSerp(topic),
-    getRedditQuestions(topic),
     getXQuestions(topic),
   ]);
+
+  // Reddit questions come from the same SERP call (no extra API cost): the
+  // reddit.com threads Google already ranked for this topic.
+  const reddit = { data: serp.data.reddit, mode: serp.mode };
 
   const paaQuestions: DiscoveredQuestion[] = serp.data.paa.map((text, i) => ({
     text, source: 'paa', mode: serp.mode, rank: i + 1,
