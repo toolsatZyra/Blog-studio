@@ -22,6 +22,7 @@ export function RecommendedTopicsTab({
             </div>
             <div className="score-num">{c.score}</div>
           </div>
+          {c.angle && <div className="topic-angle muted small">{c.angle}</div>}
           <div className="subscores">
             <span className="subscore">Audience <b>{c.breakdown.audienceRelevance}</b></span>
             <span className="subscore">Demand <b>{c.breakdown.searchQuestionDemand}</b></span>

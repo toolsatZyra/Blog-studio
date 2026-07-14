@@ -4,6 +4,7 @@ import { questionDiscovery } from './modules/questionDiscovery';
 import { keywordResearch } from './modules/keywordResearch';
 import { serpResearch } from './modules/serpResearch';
 import { topicScorer } from './modules/topicScorer';
+import { topicSynthesizer } from './modules/topicSynthesizer';
 import { briefGenerator } from './modules/briefGenerator';
 import { blogGenerator } from './modules/blogGenerator';
 import { humanizer } from './modules/humanizer';
@@ -33,7 +34,8 @@ export async function runResearch(inputs: Inputs): Promise<{
     modes: { ...discovery.modes, keywords: kwMode, serp: serp.mode },
   };
 
-  const candidates = topicScorer(inputs, research);
+  const synthTopics = await topicSynthesizer(inputs, research);
+  const candidates = topicScorer(inputs, research, synthTopics);
   return { research, candidates, providerStatus: providerStatus() };
 }
 

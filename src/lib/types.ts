@@ -102,7 +102,8 @@ export interface ScoreBreakdown {
 
 /** A scored, recommendable topic candidate (Recommended Topics tab). */
 export interface TopicCandidate {
-  topic: string;
+  topic: string; // synthesized, publishable blog title
+  angle: string; // one-line take: what the post argues / who it's for
   intent: SearchIntent;
   breakdown: ScoreBreakdown;
   score: number; // weighted total 0-100

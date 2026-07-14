@@ -2,7 +2,7 @@ import type {
   Inputs, Research, TopicCandidate, ScoreBreakdown, SearchIntent, KeywordMetric,
 } from '../types';
 import { matchService } from '../zyraContext';
-import { titleCase } from '../util';
+import { ruleBasedTopics, type SynthTopic } from './topicSynthesizer';
 
 /** Weights are your exact model; kept in one object so they're tunable. */
 export const SCORE_WEIGHTS = {
@@ -14,24 +14,6 @@ export const SCORE_WEIGHTS = {
 } as const;
 
 function clamp(n: number): number { return Math.max(0, Math.min(100, Math.round(n))); }
-
-function candidateTopics(inputs: Inputs, research: Research): string[] {
-  // Prefer real questions (PAA/Reddit/X), then cluster queries. Normalise to titles.
-  const fromQuestions = research.questions
-    .filter((q) => ['paa', 'reddit', 'x'].includes(q.source))
-    .map((q) => q.text.replace(/\?+$/, '').trim());
-  const fromClusters = research.clusters.flatMap((c) => c.queries).map(titleCase);
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const c of [...fromQuestions, ...fromClusters]) {
-    const key = c.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40);
-    if (key.length < 8 || seen.has(key)) continue;
-    seen.add(key);
-    out.push(c);
-    if (out.length >= 10) break;
-  }
-  return out;
-}
 
 function audienceScore(topic: string, inputs: Inputs): number {
   const words = `${inputs.audience.industries} ${inputs.audience.roles} ${inputs.audience.geographies}`
@@ -94,10 +76,14 @@ function justify(topic: string, b: ScoreBreakdown, sig: TopicCandidate['signals'
 
 function capitalise(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-/** Scores + justifies every candidate topic and flags the top pick(s) as Recommended. */
-export function topicScorer(inputs: Inputs, research: Research): TopicCandidate[] {
-  const topics = candidateTopics(inputs, research);
-  const candidates: TopicCandidate[] = topics.map((topic) => {
+/**
+ * Scores + justifies every candidate topic and flags the top pick(s) as
+ * Recommended. Topics are pre-synthesized (real blog titles + angles); if none
+ * were produced, falls back to the deterministic rule-based cleanup.
+ */
+export function topicScorer(inputs: Inputs, research: Research, synthTopics: SynthTopic[]): TopicCandidate[] {
+  const topics: SynthTopic[] = synthTopics.length ? synthTopics : ruleBasedTopics(inputs, research);
+  const candidates: TopicCandidate[] = topics.map(({ title: topic, angle }) => {
     const a = audienceScore(topic, inputs);
     const d = demandScore(topic, research);
     const auth = authorityScore(topic);
@@ -125,7 +111,7 @@ export function topicScorer(inputs: Inputs, research: Research): TopicCandidate[
       volume: d.volume,
     };
     return {
-      topic, intent: research.intent, breakdown, score,
+      topic, angle, intent: research.intent, breakdown, score,
       justification: justify(topic, breakdown, signals), recommended: false, signals,
     };
   });

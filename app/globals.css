@@ -97,6 +97,7 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--gold); bord
 .topic-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .topic-head .title { font-weight: 600; font-size: 14px; }
 .score-num { font-size: 22px; font-weight: 700; color: var(--gold); }
+.topic-angle { margin: 4px 0 2px; font-style: italic; }
 .subscores { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
 .subscore { font-size: 11px; color: var(--muted); }
 .subscore b { color: var(--text); font-weight: 600; }

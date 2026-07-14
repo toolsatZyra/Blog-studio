@@ -65,9 +65,14 @@ test('findBannedPhrases catches AI tells', () => {
 });
 
 test('topicScorer returns scored candidates with a recommended pick', () => {
-  const candidates = topicScorer(inputs, research);
+  const synthTopics = [
+    { title: 'What an AI Brand Film Really Costs in India', angle: 'Pricing guide for D2C founders.' },
+    { title: 'How to Brief an AI Video Studio for Better Ads', angle: 'A practical workflow for marketers.' },
+  ];
+  const candidates = topicScorer(inputs, research, synthTopics);
   assert.ok(candidates.length > 0);
   assert.ok(candidates.every((c) => c.score >= 0 && c.score <= 100));
+  assert.ok(candidates.every((c) => typeof c.angle === 'string' && c.angle.length > 0));
   assert.ok(candidates.some((c) => c.recommended));
   assert.ok(candidates[0].justification.length > 20);
   // sorted descending
