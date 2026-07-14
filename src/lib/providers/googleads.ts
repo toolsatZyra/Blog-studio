@@ -42,7 +42,7 @@ export const googleAdsKeywordProvider: KeywordProvider = {
     const token = await accessToken();
     const cid = env.googleAds.customerId.replace(/-/g, '');
     const res = await fetch(
-      `https://googleads.googleapis.com/v17/customers/${cid}:generateKeywordIdeas`,
+      `https://googleads.googleapis.com/${env.googleAds.apiVersion}/customers/${cid}:generateKeywordIdeas`,
       {
         method: 'POST',
         headers: {

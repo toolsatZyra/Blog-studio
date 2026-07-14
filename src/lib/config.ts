@@ -16,6 +16,7 @@ export const env = {
     refreshToken: process.env.GOOGLE_ADS_REFRESH_TOKEN || '',
     customerId: process.env.GOOGLE_ADS_CUSTOMER_ID || '',
     loginCustomerId: process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '',
+    apiVersion: process.env.GOOGLE_ADS_API_VERSION || 'v22',
   },
 
   dataForSeo: {
