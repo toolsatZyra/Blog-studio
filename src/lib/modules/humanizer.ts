@@ -101,8 +101,11 @@ function normalizeChars(s: string, fired: Set<string>): string {
   // Strip emoji/dingbats but keep arrows (→) that users legitimately put in CTAs.
   const noEmoji = t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2705}\u{274C}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, '').replace(/\s{2,}/g, ' ');
   if (noEmoji !== t) { fired.add('emojis'); t = noEmoji; }
-  const noDash = t.replace(/\s+[—–]\s+/g, ', ');
+  // Any em/en dash, spaced or not, becomes a comma. Plain ASCII only.
+  const noDash = t.replace(/\s*[—–]\s*/g, ', ');
   if (noDash !== t) { fired.add('em-dash'); t = noDash; }
+  const noEllipsis = t.replace(/…/g, '...');
+  if (noEllipsis !== t) { fired.add('ellipsis'); t = noEllipsis; }
   return t;
 }
 
@@ -160,12 +163,16 @@ export async function humanizer(draft: Draft): Promise<Draft> {
       const paras = blocks.map((b, i) => (b.type === 'p' ? `[${i}] ${b.text}` : null)).filter(Boolean).join('\n\n');
       const rewritten = await llm.generate({
         role: 'writer',
-        system: 'You are a line editor. Rewrite each numbered paragraph to sound human: vary sentence length hard, keep contractions and active voice, cut any remaining AI-tell phrases and repetition. DO NOT change facts, numbers, or "[source needed]" tags. Return the same [n] markers, one paragraph each.',
+        system: 'You are a line editor. Rewrite each numbered paragraph to sound human: vary sentence length hard, keep contractions and active voice, cut any remaining AI-tell phrases and repetition. DO NOT change facts, numbers, tool names, or "[source needed]" tags. PUNCTUATION: plain ASCII only, no em-dashes or en-dashes (use commas or periods), no curly quotes (use straight quotes), no ellipsis character. Return the same [n] markers, one paragraph each.',
         prompt: paras, maxTokens: 3000, temperature: 0.9,
       });
       if (rewritten.trim()) { blocks = applyRewrite(blocks, rewritten); fired.add('claude-rhythm-pass'); }
     } catch { /* keep deterministic version */ }
   }
+
+  // Final ASCII sweep: the Claude rhythm pass can re-introduce em-dashes / curly
+  // quotes after the deterministic normalization, so scrub characters once more.
+  blocks = blocks.map((b) => (b.text ? { ...b, text: tidy(normalizeChars(b.text, fired)) } : b));
 
   const text = blocks.map((b) => b.text ?? (b.items ?? []).join(' ')).join(' ');
   return {

@@ -5,6 +5,25 @@ const GOALS: BlogGoal[] = ['awareness', 'lead generation', 'thought leadership',
 const TONES: Tone[] = ['cinematic but useful', 'founder-led', 'expert editorial', 'simple and direct'];
 const GEOS = ['India', 'GCC', 'US'];
 
+const INDUSTRIES = [
+  'All', 'D2C', 'FMCG / CPG', 'E-commerce', 'Quick Commerce', 'Retail',
+  'Fashion & Apparel', 'Beauty & Personal Care', 'Jewellery', 'Food & Beverage',
+  'Health & Wellness', 'Fitness', 'Healthcare & Pharma', 'Fintech',
+  'BFSI (Banking / Financial Services / Insurance)', 'SaaS / Tech', 'B2B / Enterprise',
+  'EdTech / Education', 'Real Estate', 'Automotive', 'Travel & Hospitality',
+  'Media & Entertainment', 'Gaming & Esports', 'Consumer Electronics',
+  'Telecom', 'Home & Furniture', 'Nonprofit / NGO',
+];
+
+const ROLES = [
+  'All', 'Founder / CEO', 'Co-Founder', 'CMO', 'VP Marketing',
+  'Marketing Director', 'Marketing Manager', 'Brand Manager', 'Brand Director',
+  'Head of Content', 'Content Manager', 'Social Media Manager',
+  'Performance Marketing Manager', 'Growth Manager', 'Digital Marketing Manager',
+  'Product Marketing Manager', 'Creative Director', 'Head of Design',
+  'Communications / PR Manager', 'Media Buyer', 'Agency Owner', 'Agency Creative Lead',
+];
+
 export function InputsPanel({
   inputs, setInputs, onRun, loading,
 }: {
@@ -31,7 +50,12 @@ export function InputsPanel({
       <textarea rows={6} value={inputs.zyraContext} onChange={(e) => up({ zyraContext: e.target.value })} />
 
       <label>Target audience — industries</label>
-      <input value={inputs.audience.industries} onChange={(e) => upAud({ industries: e.target.value })} placeholder="D2C, FMCG, fintech" />
+      <select value={inputs.audience.industries} onChange={(e) => upAud({ industries: e.target.value })}>
+        {!INDUSTRIES.includes(inputs.audience.industries) && inputs.audience.industries && (
+          <option value={inputs.audience.industries}>{inputs.audience.industries}</option>
+        )}
+        {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
+      </select>
       <div className="row">
         <div>
           <label>Geographies</label>
@@ -50,7 +74,12 @@ export function InputsPanel({
         </div>
         <div>
           <label>Roles</label>
-          <input value={inputs.audience.roles} onChange={(e) => upAud({ roles: e.target.value })} placeholder="CMOs, brand managers" />
+          <select value={inputs.audience.roles} onChange={(e) => upAud({ roles: e.target.value })}>
+            {!ROLES.includes(inputs.audience.roles) && inputs.audience.roles && (
+              <option value={inputs.audience.roles}>{inputs.audience.roles}</option>
+            )}
+            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
         </div>
       </div>
 
