@@ -15,11 +15,14 @@ export function briefGenerator(
   const recommendedTitle = craftTitle(topic, inputs);
   const metaTitle = recommendedTitle.length <= 60 ? recommendedTitle : recommendedTitle.slice(0, 57).trim() + '...';
 
-  // Question-led H2s from the strongest discovered questions.
-  const questionPool = research.questions
-    .filter((q) => ['paa', 'reddit', 'x'].includes(q.source))
-    .map((q) => q.text.trim())
-    .filter((q) => q.length > 8);
+  // Question-led H2s from the strongest discovered questions. Prefer clean PAA
+  // questions; only fall back to reddit/X titles that are short and not
+  // promotional spam (raw social posts make terrible headings).
+  const SPAM = /\$\s?\d|\/month|\bincome\b|subscribe|link in bio|in this video|prompts?\s+below|complete tutorial|https?:|free course|\bdm me\b|comment below|giveaway|👇|🔥/i;
+  const clean = (q: string) => q.length >= 12 && q.length <= 90 && !SPAM.test(q);
+  const pick = (src: string[]) => research.questions
+    .filter((q) => src.includes(q.source)).map((q) => q.text.trim()).filter(clean);
+  const questionPool = [...pick(['paa']), ...pick(['reddit', 'x'])];
   const headings = uniqueTop(questionPool, 5);
   const perSection = Math.max(120, Math.round((inputs.wordCount - 200) / (headings.length + 1)));
 
