@@ -77,8 +77,9 @@ export function providerStatus(): Record<string, SourceMode> {
   return {
     keywords: isLive.googleAds() ? 'live' : 'mock',
     serp: isLive.dataForSeo() ? 'live' : 'mock',
-    reddit: 'live', // free Reddit search JSON, no key required
-
+    // Reddit topics are mined from the DataForSEO SERP call, so they're only
+    // live when DataForSeo is configured.
+    reddit: isLive.dataForSeo() ? 'live' : 'mock',
     x: isLive.twitterApi() ? 'live' : 'mock',
     writer: isLive.claude() ? 'live' : 'mock',
     cheap: isLive.openai() ? 'live' : 'mock',
