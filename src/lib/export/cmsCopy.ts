@@ -21,7 +21,7 @@ export function toBlogPost(
         break;
       case 'table':
         if (b.table) {
-          const summary = b.table.rows.map((r) => r.join(' — ')).join('; ');
+          const summary = b.table.rows.map((r) => r.join(' - ')).join('; ');
           body.push({ type: 'p', text: `${b.table.headers.join(' vs ')}: ${summary}` });
         }
         break;

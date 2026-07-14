@@ -12,8 +12,8 @@ export function briefGenerator(
   const core = cleanKeyword(topic) || cleanKeyword(inputs.topic);
   const svc = matchService(topic);
 
-  const recommendedTitle = craftTitle(core, inputs);
-  const metaTitle = recommendedTitle.length <= 60 ? recommendedTitle : recommendedTitle.slice(0, 57).trim() + '…';
+  const recommendedTitle = craftTitle(topic, inputs);
+  const metaTitle = recommendedTitle.length <= 60 ? recommendedTitle : recommendedTitle.slice(0, 57).trim() + '...';
 
   // Question-led H2s from the strongest discovered questions.
   const questionPool = research.questions
@@ -28,7 +28,7 @@ export function briefGenerator(
     level: 2 as const,
     intent: 'Answer directly, then expand with a Zyra-relevant example.',
     targetWords: perSection,
-    answerBlock: `Direct 2–3 sentence answer to "${stripQ(h)}" that a reader (or AI engine) could quote. Lead with the answer, not context.`,
+    answerBlock: `Direct 2-3 sentence answer to "${stripQ(h)}" that a reader (or AI engine) could quote. Lead with the answer, not context.`,
     questionsToAnswer: [h],
   }));
 
@@ -56,19 +56,22 @@ export function briefGenerator(
     externalSourceSuggestions: [
       'An industry report or platform data point (cite the source; tag [source needed] if not fetched)',
       'A named third-party study on AI video / content marketing',
-      'A primary statistic from a credible publication (never invent — mark [source needed])',
+      'A primary statistic from a credible publication (never invent, mark [source needed])',
     ],
     faq: uniqueTop(questionPool, 4).map((q) => ({
       q: ensureQuestion(q),
-      a: `Concise 40–60 word answer to "${stripQ(q)}". Factual, specific, no fabricated numbers.`,
+      a: `Concise 40-60 word answer to "${stripQ(q)}". Factual, specific, no fabricated numbers.`,
     })),
-    featuredSnippetAnswer: `A 40–55 word paragraph that directly answers "${topic}" — the passage most likely to win the featured snippet and AI citation.`,
-    geoAnswerBlocks: headings.map((h) => `Standalone quotable answer for "${stripQ(h)}" (40–60 words, self-contained, no pronouns referring back).`),
+    featuredSnippetAnswer: `A 40-55 word paragraph that directly answers "${topic}", the passage most likely to win the featured snippet and AI citation.`,
+    geoAnswerBlocks: headings.map((h) => `Standalone quotable answer for "${stripQ(h)}" (40-60 words, self-contained, no pronouns referring back).`),
   };
 }
 
 function craftTitle(topic: string, inputs: Inputs): string {
   const t = smartTitle(topic);
+  // Topics are LLM-synthesized, so they're usually already complete titles.
+  // Only add a framing suffix to short/bare titles, and never double a colon.
+  if (t.includes(':') || t.split(/\s+/).length >= 7) return t;
   if (inputs.goal === 'comparison') return `${t}: An Honest Comparison for ${inputs.audience.geographies || 'India'}`;
   if (/cost|price/i.test(topic)) return `${t}: What Brands Actually Pay`;
   if (inputs.goal === 'educational') return `${t}: A Practical Guide`;
@@ -78,16 +81,16 @@ function craftTitle(topic: string, inputs: Inputs): string {
 function altTitles(topic: string, inputs: Inputs): string[] {
   const t = smartTitle(topic);
   return [
-    `${t} — What Marketers Need to Know`,
+    `${t}, What Marketers Need to Know`,
     `The Real Story Behind ${t}`,
     `${t}: A Straight Answer`,
   ];
 }
 
 function metaDesc(topic: string, inputs: Inputs): string {
-  const base = `A clear, practical look at ${topic.toLowerCase()} for ${inputs.audience.roles || 'marketers'} — what it means, what to expect, and how Zyra approaches it.`;
+  const base = `A clear, practical look at ${topic.toLowerCase()} for ${inputs.audience.roles || 'marketers'}, what it means, what to expect, and how Zyra approaches it.`;
   if (base.length <= 158) return base.padEnd(120, ' ').slice(0, Math.max(120, base.length));
-  return base.slice(0, 155).trim() + '…';
+  return base.slice(0, 155).trim() + '...';
 }
 
 function angleFor(inputs: Inputs, service?: string | null): string {
