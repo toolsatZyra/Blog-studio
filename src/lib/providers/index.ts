@@ -81,7 +81,9 @@ export function providerStatus(): Record<string, SourceMode> {
     // live when DataForSeo is configured.
     reddit: isLive.dataForSeo() ? 'live' : 'mock',
     x: isLive.twitterApi() ? 'live' : 'mock',
-    writer: isLive.claude() ? 'live' : 'mock',
-    cheap: isLive.openai() ? 'live' : 'mock',
+    // Label the two LLM roles by their actual model name (nicer than the
+    // internal "writer"/"cheap" role names in the UI badges).
+    [env.claudeModelWriter]: isLive.claude() ? 'live' : 'mock',
+    [env.openaiModelCheap]: isLive.openai() ? 'live' : 'mock',
   };
 }
