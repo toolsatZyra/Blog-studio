@@ -15,11 +15,11 @@ import { ExportTab } from './components/ExportTab';
 const DEFAULT_INPUTS: Inputs = {
   topic: '',
   zyraContext: DEFAULT_ZYRA_CONTEXT,
-  audience: { industries: 'D2C, FMCG, fintech', geographies: 'India, GCC, US', roles: 'CMOs, brand managers' },
+  audience: { industries: '', geographies: 'India, GCC, US', roles: 'CMOs, brand managers' },
   goal: 'thought leadership',
   tone: 'cinematic but useful',
   wordCount: 1400,
-  cta: 'See how Zyra makes cinematic content at the speed of culture →',
+  cta: 'Schedule a call',
   competitorUrls: [],
   manualNotes: '',
 };
