@@ -12,6 +12,7 @@ RULES:
 - Every topic must serve Zyra's space: AI brand films, AI video/content production, micro-drama, performance ad creative, social content, and adjacent thought-leadership a brand/marketing audience cares about (AI in advertising, production cost/'speed, creative workflows).
 - DROP anything off-brand or off-topic (gaming lore, fiction, personal drama, unrelated tech). If a signal isn't relevant to Zyra, ignore it.
 - Titles must be clean and professional: no profanity, no emoji, no clickbait, no ALL CAPS, no first-person rant phrasing. Publishable on a company blog.
+- BIAS HARD TOWARD BUYER INTENT. Zyra's readers are brand marketers, founders, and CMOs deciding whether to COMMISSION AI content, not DIY hobbyists. Lead with topics they'd actually search and convert on: cost and budgeting, ROI and results, AI vs traditional production, use-cases for their industry, "is this right for my brand", how brands use AI video/films, timelines and process, what to look for in a studio. At MOST 1-2 of the topics may be pure educational explainers; do NOT fill the list with practitioner how-tos (prompt tips, ComfyUI/LoRA tutorials, tool settings, "how to keep a character consistent") — those attract creators who won't hire a studio.
 - Tailor to the given audience, goal, and tone.
 - Each topic gets a one-sentence "angle": what the post argues and who it's for.
 

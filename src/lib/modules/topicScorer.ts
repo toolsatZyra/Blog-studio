@@ -6,11 +6,13 @@ import { ruleBasedTopics, type SynthTopic } from './topicSynthesizer';
 
 /** Weights are your exact model; kept in one object so they're tunable. */
 export const SCORE_WEIGHTS = {
-  audienceRelevance: 0.30,
-  searchQuestionDemand: 0.25,
+  audienceRelevance: 0.25,
+  searchQuestionDemand: 0.20,
   zyraAuthorityFit: 0.20,
-  commercialIntent: 0.15,
-  competitionGap: 0.10,
+  // Buyer intent leads: Zyra wants topics its BUYERS (brand marketers, founders)
+  // search and convert on, not DIY-creator how-tos with high raw demand.
+  commercialIntent: 0.30,
+  competitionGap: 0.05,
 } as const;
 
 function clamp(n: number): number { return Math.max(0, Math.min(100, Math.round(n))); }
@@ -40,10 +42,18 @@ function authorityScore(topic: string): { score: number; service: string | null 
   return { score: svc ? 88 : 46, service: svc?.name ?? null };
 }
 
+// Buyer intent: does this read like something a BRAND BUYER (CMO, founder,
+// marketer deciding whether to commission AI content) would search — versus a
+// DIY creator/hobbyist how-to? Buyer framing lifts it; how-to/DIY framing pulls
+// it down, so demand-heavy creator topics stop out-ranking convertible ones.
+const BUYER_SIGNALS = /\b(cost|price|pricing|hire|agency|studio|budget|roi|worth it|invest|spend|quote|vs|versus|traditional|for brands?|for (d2c|dtc|fmcg|marketers?|businesses?|companies|startups?)|campaign|marketing|advertising|ad film|commercial|production house|outsource)\b/;
+const CREATOR_DIY_SIGNALS = /\b(how to|tutorial|step[- ]by[- ]step|for free|free|comfyui|lora|workflow|settings|checkpoint|fine[- ]?tune|self[- ]host|locally|open[- ]?source|beginner'?s guide)\b/;
+
 function commercialScore(topic: string, intent: SearchIntent): number {
   const t = topic.toLowerCase();
-  let s = intent === 'commercial' ? 72 : intent === 'transactional' ? 85 : 40;
-  if (/(cost|price|pricing|hire|agency|budget)/.test(t)) s += 12;
+  let s = intent === 'transactional' ? 85 : intent === 'commercial' ? 72 : 40;
+  if (BUYER_SIGNALS.test(t)) s += 15;
+  if (CREATOR_DIY_SIGNALS.test(t)) s -= 25; // DIY/how-to = practitioner, not a buyer
   return clamp(s);
 }
 
