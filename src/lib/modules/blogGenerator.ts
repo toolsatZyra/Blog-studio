@@ -1,9 +1,21 @@
 import type { Inputs, Brief, Draft, DraftBlock } from '../types';
 import { getLLM } from '../providers';
+import { env } from '../config';
 import { ZYRA_PROOF_POINTS, matchService } from '../zyraContext';
 import { marketGuidance } from '../markets';
 import { countWords } from '../util';
 import { AI_FILM_KNOWLEDGE } from '../aiFilmKnowledge';
+
+// Appended to the system prompt only when live web search is enabled. It flips
+// the "don't cite sources" guardrail into "cite only REAL sources you found" and
+// tells the model to verify fast-moving claims before writing.
+const WEB_SEARCH_ADDENDUM = `
+
+LIVE WEB SEARCH IS AVAILABLE — USE IT. You can search the web during this task.
+- Before writing, run a search or two to verify the CURRENT state of any fast-moving claim (which tools lead, what shipped recently, real examples, current best practice). Prefer what you find now over memory. The AI FILMMAKING PLAYBOOK is your baseline; the web is your freshness check.
+- Cite real sources you actually found, inline and naturally (e.g. "as [publication] reported"). This is good for credibility and AI-answer visibility. This RELAXES the earlier "don't name sources" rule: naming REAL found sources is now encouraged.
+- NEVER invent a source, quote, statistic, tool, project, or example you did not find in a real search result. If a search turns up nothing solid, state the technique plainly with no citation rather than fabricate one. Inventing a citation is worse than having none.
+- You MAY now name current specifics you actually verified (a newly shipped tool or capability), but still avoid hard numbers that date fast (exact prices, version strings, benchmark scores) unless they are genuinely load-bearing AND you attribute them with an "as of" and the real source.`;
 
 const SYSTEM = `You are an expert AI filmmaker writing for Zyra, India's AI Content Studio ("Where AI meets Cinema"). You are not a marketer describing AI from the outside — you are a working practitioner who directs AI-generated films every week: you know which tool to reach for on which shot, the actual production workflow, and the failure modes that separate amateurs from pros. Write from that chair, with the calm authority of someone who has shipped this work.
 
@@ -39,12 +51,16 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
   const llm = getLLM();
   if (llm.liveFor('writer')) {
     try {
+      const webSearch = env.writerWebSearch;
       const md = await llm.generate({
         role: 'writer',
-        system: SYSTEM,
+        system: webSearch ? SYSTEM + WEB_SEARCH_ADDENDUM : SYSTEM,
         prompt: buildPrompt(inputs, brief),
-        maxTokens: 4000,
+        // Web search adds thinking + tool-use tokens on top of the article, so
+        // give it far more headroom or the draft gets truncated before it starts.
+        maxTokens: webSearch ? 8000 : 4000,
         temperature: 0.85,
+        webSearch,
       });
       if (md.trim()) return finalize(parseMarkdown(md), 'live');
       throw new Error('Claude returned an empty response.');

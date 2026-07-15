@@ -6,6 +6,10 @@ export const env = {
   openaiImageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
   anthropicKey: process.env.ANTHROPIC_API_KEY || '',
   claudeModelWriter: process.env.CLAUDE_MODEL_WRITER || 'claude-sonnet-5',
+  // Live web search during blog writing (Claude server-side tool). On by default;
+  // set WRITER_WEB_SEARCH=0 to disable. max_uses caps searches per draft.
+  writerWebSearch: process.env.WRITER_WEB_SEARCH !== '0',
+  writerWebSearchMaxUses: Number(process.env.WRITER_WEB_SEARCH_MAX_USES) || 5,
   llmCheapProvider: process.env.LLM_CHEAP_PROVIDER || 'openai',
   llmWriterProvider: process.env.LLM_WRITER_PROVIDER || 'claude',
 

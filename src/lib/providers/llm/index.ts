@@ -13,6 +13,7 @@ export interface LLM {
   generate(args: {
     role: LLMRole; system: string; prompt: string;
     maxTokens?: number; temperature?: number;
+    webSearch?: boolean; // Claude-only: enable live web search during generation
   }): Promise<string>;
 }
 
