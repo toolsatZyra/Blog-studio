@@ -61,7 +61,11 @@ export default function Home() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const s = JSON.parse(raw);
-        setInputs(s.inputs ?? DEFAULT_INPUTS);
+        // Merge over defaults so new fields get their default, and force the CTA
+        // to fall back to the default whenever a saved draft left it blank.
+        const mergedInputs = { ...DEFAULT_INPUTS, ...(s.inputs || {}) };
+        if (!mergedInputs.cta?.trim()) mergedInputs.cta = DEFAULT_INPUTS.cta;
+        setInputs(mergedInputs);
         setResearch(s.research); setCandidates(s.candidates); setSelected(s.selected);
         setBrief(s.brief); setDraft(s.draft); setAudit(s.audit); setExportsData(s.exports);
         setProviderStatus(s.providerStatus);
