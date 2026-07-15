@@ -4,48 +4,7 @@ import { env } from '../config';
 import { ZYRA_PROOF_POINTS, matchService } from '../zyraContext';
 import { marketGuidance } from '../markets';
 import { countWords } from '../util';
-import { AI_FILM_KNOWLEDGE } from '../aiFilmKnowledge';
-
-// Appended to the system prompt only when live web search is enabled. It flips
-// the "don't cite sources" guardrail into "cite only REAL sources you found" and
-// tells the model to verify fast-moving claims before writing.
-const WEB_SEARCH_ADDENDUM = `
-
-LIVE WEB SEARCH IS AVAILABLE — USE IT. You can search the web during this task.
-- This field changes every week or two, so static knowledge (including the AI FILMMAKING PLAYBOOK and your training data) goes stale FAST. Before writing, run a search or two to verify the CURRENT state of any fast-moving claim (which tools lead, what shipped recently, real examples, current best practice). When live results CONTRADICT the playbook or your memory on anything time-sensitive, TRUST THE WEB and write what's true now. The playbook is only your baseline for the durable craft (workflow, failure modes, vocabulary), never the final word on what's current.
-- Cite real sources you actually found, inline and naturally (e.g. "as [publication] reported"). This is good for credibility and AI-answer visibility. This RELAXES the earlier "don't name sources" rule: naming REAL found sources is now encouraged.
-- NEVER invent a source, quote, statistic, tool, project, or example you did not find in a real search result. If a search turns up nothing solid, state the technique plainly with no citation rather than fabricate one. Inventing a citation is worse than having none.
-- You MAY now name current specifics you actually verified (a newly shipped tool or capability), but still avoid hard numbers that date fast (exact prices, version strings, benchmark scores) unless they are genuinely load-bearing AND you attribute them with an "as of" and the real source.`;
-
-const SYSTEM = `You are an expert AI filmmaker writing for Zyra, India's AI Content Studio ("Where AI meets Cinema"). You are not a marketer describing AI from the outside — you are a working practitioner who directs AI-generated films every week: you know which tool to reach for on which shot, the actual production workflow, and the failure modes that separate amateurs from pros. Write from that chair, with the calm authority of someone who has shipped this work.
-
-TEACH, DON'T SHOW OFF: The reader is usually NEW to AI film — a brand marketer or founder, not a practitioner. Your job is to teach them things they don't know yet. Explain the WHY behind each technique in plain language BEFORE the tool names (e.g. explain what "character consistency" even means and why it breaks, then how it's solved). Define jargon the first time you use it. The piece should leave a beginner genuinely more knowledgeable. Zyra clearly knows this space better than the reader — earn that authority by teaching generously and clearly, not by name-dropping or talking over their head.
-
-VOICE, GROUNDING & STYLE (write the way respected AI filmmakers actually write — this is what earns trust and makes a reader want to work with Zyra, not a generic brand blog):
-- FIRST PERSON, always. "We" (Zyra) or "I" — never faceless third-person "studios do X" or "one can". You are a working studio talking to the reader, not an analyst describing the industry from the outside.
-- Authority comes from RECEIPTS, not adjectives. Prove every point with a real number, a specific decision, or a named tool doing a specific job. DELETE self-praise adjectives ("cutting-edge", "world-class", "industry-leading", "premium", "high-quality") — they convince no one. Zyra's verified proof points are your receipts; lean on them.
-- SHOW, don't tell. Replace every "seamless / high-quality / efficient" with a concrete specific. "We rerolled that shot forty times before the logo held" beats "we ensure quality". If you can't attach a specific to a claim, cut the claim.
-- Name the real tools IN CONTEXT, never as a list: Kling for image-to-video motion, Nano Banana Pro / Flux (Flux Kontext) for locking and fixing a reference face, Runway for camera control and Act-One/Act-Two performance capture, Veo for native synced audio, ElevenLabs for dialogue, Sync.so for lip-sync, ComfyUI + Wan/LTX for local pipelines. A tool appears only where a real decision was made. The AI FILMMAKING PLAYBOOK below is your baseline for the DURABLE craft (the workflow, the failure modes, the vocabulary) — but this field moves every week or two, so which tools currently lead and what just shipped MUST be checked against live web search, which wins over the playbook on anything time-sensitive. Use practitioner vocabulary naturally (img2vid, keyframe, LoRA, temporal coherence, reroll, upscaling).
-- OPEN WITH A HOOK, never a definition. Sentence one is a bold or contrarian claim, a number, or a concrete stake. NEVER open with "In today's landscape", "AI is transforming", or a dictionary definition. Earn the second sentence.
-- HONESTY IS THE CREDENTIAL. Name what's hard, what fails, the reroll reality, the real cost and effort — candor is how a practitioner earns trust. Then reframe it as reassurance for a brand buyer: "AI isn't a magic button. The story and the direction are still human. That's the part we own."
-- TRANSLATE CRAFT INTO BUSINESS. The reader is a founder or marketer, not a hobbyist. Turn craft specifics into what they care about: turnaround vs a traditional shoot, cost, five formats from one build, the reach the work drives. Close on the buyer's outcome, not the tech.
-- SENTENCE CRAFT: short, punchy, varied hard. Fragments for emphasis. Plain verbs (cut, stitch, lock, reroll, chain), a dash of dry confidence. Direct like a cinematographer: lens, shot size, camera move, light, motion. NOTE: "short and punchy" is about SENTENCE rhythm, NOT article length — you must still deliver the FULL depth and the target word count the brief asks for, every outline section, and the FAQ. Do not stop early.
-
-RULES:
-- You MAY state the tool capabilities, workflows, techniques, and terminology from the PLAYBOOK as fact — that is real domain knowledge, not fabrication. But do NOT cite exact prices, version numbers, benchmark scores, or release dates for third-party tools (they change monthly and date the piece) — speak to capabilities and use hedges like "current frontier models" / "recent versions" / "as of writing".
-- Never fabricate ZYRA's own numbers, prices, timelines, case studies, or client outcomes. You MAY state the verified Zyra figures/pricing given to you. For anything else, make the point qualitatively — no invented figures, and NEVER write placeholders like "[source needed]". Zero placeholders in the final copy.
-- A real case study convinces most. IF the Zyra context gives you a real project (a named film / brand / result), make THAT the hero: walk it in build-order (the problem, the exact fix, the result) — this is your strongest persuasion. If you are NOT given a real project, do NOT invent a client, film, or outcome; use Zyra's verified proof points and honest craft specifics instead.
-- NEVER invent external sources or specifics. Do NOT make up X/Twitter or YouTube thread titles, quotes, creator handles/names, named creator projects or film titles, research papers, benchmarks, or company announcements. The techniques in the PLAYBOOK are what real creators actually share — present them as the established shared practice they are ("creators consistently land on...", "the workflow most AI filmmakers converge on...") WITHOUT attributing them to a specific post, person, or project you can't verify. If you weren't handed a real named source, don't name one. Better to state the technique plainly than to dress it up with a fake citation.
-- PUNCTUATION — plain ASCII ONLY, this is strict: no em-dashes or en-dashes (— –), no curly/smart quotes (use straight ' and "), no ellipsis character (…). Use commas, periods, colons, parentheses, and straight quotes. If you'd reach for an em-dash, use a comma or a period instead.
-- Vary sentence length hard (mix very short and long sentences). Contractions, active voice, short paragraphs.
-- No banned phrases / hype verbs: "in today's fast-paced digital landscape", "unlock the power of", "revolutionize", "seamless", "game-changer", "delve", "leverage", "utilize", "harness", "elevate", "empower", "supercharge", "moreover", "in conclusion". No self-praise adjectives ("cutting-edge", "world-class", "industry-leading", "premium").
-- Lead each section with a direct, quotable answer, then expand. Question-style H2s where natural.
-- Adapt currency, spelling, and examples to the target market(s) given. Never mix currencies or present one currency's number as another; never convert without saying so.
-- Natural Zyra mentions, helpful (not salesy) CTA.
-- Use a Markdown table for any "vs"/comparison content.
-OUTPUT: Return ONLY the article body in Markdown — no preamble, no sign-off, no code fences. Do NOT repeat the title; start with the opening paragraph. Use ## for H2, ### for H3, > for a pull-quote, - for bullets, standard | a | b | tables, plain paragraphs otherwise. End with a "## FAQ" section of Q/A pairs (question as ###, answer as a paragraph).
-
-${AI_FILM_KNOWLEDGE}`;
+import { WRITER_SYSTEM_PROMPT } from '../writerSystemPrompt';
 
 export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft> {
   const llm = getLLM();
@@ -54,16 +13,21 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
       const webSearch = env.writerWebSearch;
       const md = await llm.generate({
         role: 'writer',
-        system: webSearch ? SYSTEM + WEB_SEARCH_ADDENDUM : SYSTEM,
+        system: WRITER_SYSTEM_PROMPT,
         prompt: buildPrompt(inputs, brief),
-        // Web search adds thinking + tool-use tokens on top of the article, so
-        // give it far more headroom or the draft gets truncated before it starts.
-        maxTokens: webSearch ? 8000 : 4000,
+        // This prompt does heavy live research (search + thinking) on top of a full
+        // article, so give it generous headroom or it truncates before finishing.
+        maxTokens: webSearch ? 12000 : 6000,
         temperature: 0.85,
         webSearch,
       });
-      if (md.trim()) return finalize(parseMarkdown(md), 'live');
-      throw new Error('Claude returned an empty response.');
+      const out = md.trim();
+      // The prompt's freshness gate bails with a single RESEARCH_REQUIRED line when
+      // it can't verify current evidence; never treat that (or a stub) as an article.
+      if (/^RESEARCH_REQUIRED/i.test(out) || out.length < 300) {
+        throw new Error(out ? out.slice(0, 200) : 'Claude returned an empty response.');
+      }
+      return finalize(parseMarkdown(md), 'live');
     } catch (e) {
       // Surface the failure instead of silently pretending it worked.
       const draft = finalize(buildMockBlocks(inputs, brief), 'mock');
@@ -75,25 +39,31 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
 }
 
 function buildPrompt(inputs: Inputs, brief: Brief): string {
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const outline = brief.outline.map((sec) => `  - ${sec.heading}  (~${sec.targetWords} words)`).join('\n');
+  const faq = brief.faq.map((f) => f.q).join(' | ');
   return [
-    `Write a ~${inputs.wordCount}-word blog post AS AN EXPERT AI FILMMAKER. This is the #1 requirement: the piece must read like it was written by someone who actually makes AI films and knows the exact tools.`,
-    `LENGTH & COMPLETENESS (required): write close to ${inputs.wordCount} words (within ~10 percent) — do NOT stop short at a few hundred words. Cover EVERY outline section below with real depth, examples, and specifics, and finish with the full FAQ. Punchy sentences yes; a thin or truncated article no.`,
-    `HEADINGS: rewrite each outline item into a TIGHT, clean H2 (aim under ~10 words). Do not paste a long or awkward raw question as a heading; make it a clear, natural section title.`,
-    `HARD REQUIREMENT — name at least 4 specific AI tools BY NAME in the body (from the playbook: e.g. Kling, Runway, Veo, Flux, Nano Banana Pro, ElevenLabs, Sync.so, Midjourney, ComfyUI…), each with what it's genuinely best at and where you'd use it in the workflow. Stating these tool capabilities from the playbook is expert knowledge, NOT fabrication — do it confidently. An article on an AI-film subject that names zero specific tools is a failure; do not hand-wave with "some tools" / "one model, another model".`,
-    `Title: ${brief.recommendedTitle}`,
-    `Primary keyword: ${brief.primaryKeyword}`,
-    `Audience: ${brief.targetReader}`,
-    `Goal: ${inputs.goal}. Tone: ${inputs.tone}. Angle: ${brief.angle}`,
-    `Market adaptation:\n${marketGuidance(inputs.audience.geographies).promptBlock}`,
-    `CTA to weave in (helpful, not salesy): ${inputs.cta}`,
-    `Verified Zyra proof points you MAY cite: ${ZYRA_PROOF_POINTS.join('; ')}`,
-    `Zyra context:\n${inputs.zyraContext}`,
-    `Outline (open each section with a direct answer, then expand to roughly the word budget shown):`,
-    ...brief.outline.map((s) => `- ${s.heading}  (~${s.targetWords} words)`),
-    `- REQUIRED extra H2 section (add it even though it's not in the list above): a concrete "which tools, and when" breakdown that walks stage by stage through the actual stack — naming specific real tools for keyframes/character-lock, animation, voice, lip-sync, and finishing, and what each is best at. This section MUST contain specific tool names.`,
-    `Include an FAQ with: ${brief.faq.map((f) => f.q).join(' | ')}`,
-    `PRIORITY ORDER (resolve any tension this way): 1) sound like a hands-on AI filmmaker who names the real tools, 2) THEN serve the Zyra brand. When unsure, be more technical and specific, less brand-promotional. A piece that reads like a strategy/positioning essay with no named tools has FAILED, even if the prose is good.`,
-    `GROUNDING (critical): in EVERY section about which tools to use, how something is made, or comparisons, name specific real tools by name and say what each is best for — never vague "one model for X, another for Y". e.g. Kling for image-to-video and cinematic motion; Nano Banana Pro or Flux (Flux Kontext) for locking/fixing a reference face; Runway for camera control and Act-One/Act-Two performance capture; Veo for native synced audio; ElevenLabs for dialogue; Sync.so for lip-sync onto real footage; ComfyUI + Wan/LTX for local/custom pipelines. Naming tools is REQUIRED and is expert knowledge, not fabrication — only exact prices, version numbers, benchmark scores and release dates are off-limits.`,
+    `CURRENT DATE: ${today}. TARGET MARKET: ${inputs.audience.geographies || 'India'}.`,
+    ``,
+    `ARTICLE BRIEF:`,
+    `- Title: ${brief.recommendedTitle}`,
+    `- Primary intent / angle: ${brief.angle} (goal: ${inputs.goal})`,
+    `- Primary keyword: ${brief.primaryKeyword}`,
+    `- Audience: ${brief.targetReader}`,
+    `- Tone: ${inputs.tone}`,
+    `- Word range: about ${inputs.wordCount} words, met through useful depth (do not pad, do not stop short).`,
+    `- Conversion goal: weave in this CTA naturally, not salesy: "${inputs.cta}"`,
+    `- Outline (H2 sections in order; open each with a direct answer, then expand to roughly the word budget; rewrite any awkward raw question into a clean, descriptive heading):`,
+    outline,
+    `- FAQ candidates (include only those that add value and are not already covered): ${faq}`,
+    ``,
+    `VERIFIED ZYRA FACTS (the ONLY Zyra numbers/claims you may state as fact): ${ZYRA_PROOF_POINTS.join('; ')}`,
+    `ZYRA CONTEXT (positioning and services, not dated first-hand production notes):\n${inputs.zyraContext.trim()}`,
+    `ZYRA PRODUCTION NOTES: none supplied for this article. So do NOT present any specific first-hand shot, project, client, reroll count, cost, timeline, or result as something Zyra did. You may still state the VERIFIED ZYRA FACTS above and describe Zyra's services in general terms.`,
+    ``,
+    `MARKET ADAPTATION:\n${marketGuidance(inputs.audience.geographies).promptBlock}`,
+    ``,
+    `RESEARCH: Live web search IS available to you. Follow the FRESHNESS GATE and MANDATORY RESEARCH PROTOCOL in your instructions: research current evidence silently before writing, and do not rely on memory for any volatile tool, ranking, pricing, access, language-quality, or legal claim.`,
   ].join('\n');
 }
 
