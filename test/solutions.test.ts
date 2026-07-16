@@ -33,46 +33,56 @@ test('catalog mirrors the real site: 5 services, 22 case studies, no metrics', (
 
 // ── naming ──────────────────────────────────────────────────────────────────
 
-test('slug: service + industry + geography', () => {
-  assert.equal(buildSolutionSlug(base), 'ai-brand-films-for-fintech-brands-in-bengaluru');
+test('slug: industry x geography becomes a two-segment path', () => {
+  assert.equal(buildSolutionSlug(base), 'fintech/bengaluru');
 });
 
-test('slug: industry only / geography only', () => {
-  assert.equal(buildSolutionSlug({ ...base, geography: '' }), 'ai-brand-films-for-fintech-brands');
-  assert.equal(buildSolutionSlug({ ...base, industry: '' }), 'ai-brand-films-in-bengaluru');
+test('slug: one input gives one segment', () => {
+  assert.equal(buildSolutionSlug({ ...base, geography: '' }), 'fintech');
+  assert.equal(buildSolutionSlug({ ...base, industry: '' }), 'bengaluru');
 });
 
-test('slug: no service falls back to the umbrella', () => {
-  assert.equal(
-    buildSolutionSlug({ ...base, serviceSlugs: [] }),
-    'ai-content-production-for-fintech-brands-in-bengaluru',
-  );
-});
-
-test('slug: several services read as the umbrella, not a list', () => {
-  assert.equal(
-    buildSolutionSlug({ ...base, serviceSlugs: ['ai-brand-films', 'social-media-content'] }),
-    'ai-content-production-for-fintech-brands-in-bengaluru',
-  );
-});
-
-test('slug: keeps the connective words util.slugify would strip', () => {
-  const s = buildSolutionSlug(base);
-  assert.match(s, /-for-/);
-  assert.match(s, /-in-/);
+test('slug: the SERVICE is deliberately not in the URL', () => {
+  // industry x geography is the unique key: one segment, one page.
+  const films = buildSolutionSlug({ ...base, serviceSlugs: ['ai-brand-films'] });
+  const drama = buildSolutionSlug({ ...base, serviceSlugs: ['micro-drama-production'] });
+  const none = buildSolutionSlug({ ...base, serviceSlugs: [] });
+  assert.equal(films, 'fintech/bengaluru');
+  assert.equal(drama, films, 'service must not change the URL');
+  assert.equal(none, films);
 });
 
 test('slug: messy free-text is folded, not rejected', () => {
   assert.equal(
     buildSolutionSlug({ ...base, industry: 'D2C  &  Beauty!', geography: 'Delhi NCR' }),
-    'ai-brand-films-for-d2c-and-beauty-brands-in-delhi-ncr',
+    'd2c-and-beauty/delhi-ncr',
   );
 });
 
-test('uniqueSlug: appends a numeric suffix on collision', () => {
-  assert.equal(uniqueSlug('a-b', []), 'a-b');
-  assert.equal(uniqueSlug('a-b', ['a-b']), 'a-b-2');
-  assert.equal(uniqueSlug('a-b', ['a-b', 'a-b-2']), 'a-b-3');
+test('slug: never emits an empty or doubled segment', () => {
+  for (const [i, g] of [['Fintech', ''], ['', 'Bengaluru'], ['Fintech', 'Bengaluru']]) {
+    const slug = buildSolutionSlug({ ...base, industry: i, geography: g });
+    assert.ok(!slug.startsWith('/') && !slug.endsWith('/'), slug);
+    assert.ok(!slug.includes('//'), slug);
+  }
+});
+
+test('uniqueSlug: suffixes the LAST segment so the path shape survives', () => {
+  assert.equal(uniqueSlug('fintech/bengaluru', []), 'fintech/bengaluru');
+  assert.equal(uniqueSlug('fintech/bengaluru', ['fintech/bengaluru']), 'fintech/bengaluru-2');
+  assert.equal(
+    uniqueSlug('fintech/bengaluru', ['fintech/bengaluru', 'fintech/bengaluru-2']),
+    'fintech/bengaluru-3',
+  );
+  // single-segment still works
+  assert.equal(uniqueSlug('fintech', ['fintech']), 'fintech-2');
+});
+
+test('REGRESSION: a second service for the same segment renames, never clobbers', () => {
+  const first = buildSolutionSlug({ ...base, serviceSlugs: ['ai-brand-films'] });
+  const second = buildSolutionSlug({ ...base, serviceSlugs: ['micro-drama-production'] });
+  assert.equal(second, first, 'same industry x geo -> same desired slug');
+  assert.equal(uniqueSlug(second, [first]), 'fintech/bengaluru-2');
 });
 
 test('H1: single service keeps "Brands"; umbrella drops it', () => {
@@ -95,7 +105,8 @@ test('H1/slug: acronyms survive for every real service', () => {
   };
   for (const [slug, phrase] of Object.entries(expected)) {
     assert.equal(servicePhrase([slug]), phrase, `phrase for ${slug}`);
-    assert.equal(buildSolutionSlug({ ...base, serviceSlugs: [slug] }), `${slug}-for-fintech-brands-in-bengaluru`);
+    // The service shapes the H1, never the URL.
+    assert.equal(buildSolutionSlug({ ...base, serviceSlugs: [slug] }), 'fintech/bengaluru');
   }
 });
 
@@ -204,7 +215,7 @@ test('guards: explain hits in plain English naming the field', () => {
 // ── schema ──────────────────────────────────────────────────────────────────
 
 const page: SolutionPage = {
-  slug: 'ai-brand-films-for-fintech-brands-in-bengaluru',
+  slug: 'fintech/bengaluru',
   industry: 'Fintech',
   geography: 'Bengaluru',
   serviceSlugs: ['ai-brand-films'],
@@ -315,7 +326,7 @@ test('generator: derives naming and grounds deliverables/process in real data', 
     industry: 'Fintech', geography: 'Bengaluru',
     serviceSlugs: ['ai-brand-films'], caseStudySlugs: ['cars24'], cta: 'Schedule a Call',
   });
-  assert.equal(page.slug, 'ai-brand-films-for-fintech-brands-in-bengaluru');
+  assert.equal(page.slug, 'fintech/bengaluru');
   assert.equal(page.h1, 'AI Brand Films for Fintech Brands in Bengaluru');
   assert.equal(page.deliverables.length, 6);
   assert.equal(page.process.length, 5);

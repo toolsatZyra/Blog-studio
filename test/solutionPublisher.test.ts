@@ -7,7 +7,7 @@ import { uniqueSlug } from '../src/lib/solutions/naming.ts';
 import type { SolutionPage } from '../src/lib/types.ts';
 
 const page: SolutionPage = {
-  slug: 'ai-brand-films-for-fintech-brands-in-bengaluru',
+  slug: 'fintech/bengaluru',
   industry: 'Fintech',
   geography: 'Bengaluru',
   serviceSlugs: ['ai-brand-films'],
@@ -97,7 +97,7 @@ test('REGRESSION: republishing the same combo never clobbers the live page', () 
   const once = insertIntoLpData(FIXTURE, serializeSolutionPage(page));
   const taken = existingSlugs(once);
   const next = uniqueSlug(page.slug, taken);
-  assert.equal(next, `${page.slug}-2`);
+  assert.equal(next, 'fintech/bengaluru-2');
 
   const twice = insertIntoLpData(once, serializeSolutionPage({ ...page, slug: next }));
   const slugs = existingSlugs(twice);

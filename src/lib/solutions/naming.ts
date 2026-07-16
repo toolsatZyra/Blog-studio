@@ -50,29 +50,40 @@ function toSlugPart(s: string): string {
 }
 
 /**
- * Deterministic, keyword-rich, readable slug.
- *   Fintech x Bengaluru x AI Brand Films
- *     -> ai-brand-films-for-fintech-brands-in-bengaluru
- *   industry only -> ai-brand-films-for-fintech-brands
- *   geography only -> ai-brand-films-in-bengaluru
+ * The page's path under /solutions, as segments joined by "/".
+ *
+ *   Fintech x Bengaluru -> "fintech/bengaluru"   -> /solutions/fintech/bengaluru
+ *   industry only       -> "fintech"             -> /solutions/fintech
+ *   geography only      -> "bengaluru"           -> /solutions/bengaluru
+ *
+ * The SERVICE is deliberately absent: industry x geography is the unique key, so
+ * one market segment gets one landing page rather than several near-duplicates
+ * competing with each other. Which services it sells is page content.
+ *
  * Caller enforces that at least one of industry/geography is present.
  */
 export function buildSolutionSlug(inputs: SolutionInputs): string {
-  const parts = [serviceSlugPart(inputs.serviceSlugs)];
-  const industry = inputs.industry.trim();
-  const geography = inputs.geography.trim();
-
-  if (industry) parts.push('for', toSlugPart(industry), 'brands');
-  if (geography) parts.push('in', toSlugPart(geography));
-
-  return parts.filter(Boolean).join('-').replace(/-+/g, '-');
+  const segments = [inputs.industry, inputs.geography]
+    .map((s) => toSlugPart(s.trim()))
+    .filter(Boolean);
+  return segments.join('/');
 }
 
-/** De-duplicate against slugs already published. `-2`, `-3`, ... */
+/**
+ * De-duplicate against slugs already published, suffixing the LAST segment so
+ * the path shape survives: "fintech/bengaluru" -> "fintech/bengaluru-2".
+ *
+ * This fires when the same industry x geography is generated twice (typically a
+ * second service for the same segment). The publisher surfaces the rename rather
+ * than overwriting the live page.
+ */
 export function uniqueSlug(base: string, taken: string[]): string {
   if (!taken.includes(base)) return base;
+  const cut = base.lastIndexOf('/');
+  const head = cut === -1 ? '' : base.slice(0, cut + 1);
+  const tail = cut === -1 ? base : base.slice(cut + 1);
   for (let n = 2; n < 500; n++) {
-    const candidate = `${base}-${n}`;
+    const candidate = `${head}${tail}-${n}`;
     if (!taken.includes(candidate)) return candidate;
   }
   throw new Error(`Could not find a free slug for "${base}".`);
