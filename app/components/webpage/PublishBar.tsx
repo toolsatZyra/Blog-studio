@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { SolutionPage } from '@/lib/types';
+import { ViewPageButton } from './ViewPageButton';
 
 interface Result {
   prUrl: string;
@@ -82,15 +83,18 @@ export function PublishBar({ page, blocked }: { page: SolutionPage; blocked: boo
   return (
     <div className="card">
       <div className="export-head">
-        <h3 style={{ margin: 0 }}>Publish to thezyra.in</h3>
-        <button className="btn small" onClick={publish} disabled={publishing || blocked}>
-          {publishing ? <><span className="spinner" /> Opening PR…</> : 'Open pull request →'}
-        </button>
+        <h3 style={{ margin: 0 }}>Review, then publish</h3>
+        <div className="btn-row" style={{ margin: 0 }}>
+          <ViewPageButton page={page} />
+          <button className="btn secondary small" onClick={publish} disabled={publishing || blocked}>
+            {publishing ? <><span className="spinner" /> Opening PR…</> : 'Open pull request →'}
+          </button>
+        </div>
       </div>
       <p className="muted small" style={{ margin: '6px 0 0' }}>
-        Appends this page to <code>lp-data.ts</code> on a new branch and opens a PR — this is how
-        you see the real page: Vercel builds a preview for the PR, at a real URL.
-        <strong> Nothing goes live until you merge.</strong>
+        <strong>View page</strong> opens the real page in a new tab — the site&apos;s own template,
+        nothing published, no PR. When it looks right, <strong>Open pull request</strong> appends it
+        to <code>lp-data.ts</code> on a branch for review. <strong>Nothing goes live until you merge.</strong>
       </p>
 
       {blocked && (
