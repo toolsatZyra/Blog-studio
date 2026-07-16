@@ -167,6 +167,7 @@ export interface Draft {
   mode: SourceMode;
   appliedRules?: string[]; // humanizer rules that fired
   warnings?: string[]; // e.g. a live LLM call failed and fell back to mock
+  edited?: boolean; // true once a human has hand-edited the generated draft
 }
 
 export type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';

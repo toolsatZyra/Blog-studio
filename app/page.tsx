@@ -4,6 +4,7 @@ import type {
   Inputs, Research, TopicCandidate, Brief, Draft, Audit, Exports, SourceMode,
 } from '@/lib/types';
 import { DEFAULT_ZYRA_CONTEXT } from '@/lib/zyraContext';
+import { rederive } from '@/lib/rederive';
 import { InputsPanel } from './components/InputsPanel';
 import { ResearchTab } from './components/ResearchTab';
 import { RecommendedTopicsTab } from './components/RecommendedTopicsTab';
@@ -44,6 +45,8 @@ export default function Home() {
   const [selected, setSelected] = useState<TopicCandidate>();
   const [brief, setBrief] = useState<Brief>();
   const [draft, setDraft] = useState<Draft>();
+  // The pristine generated draft, kept so "Revert to generated" can undo edits.
+  const [originalDraft, setOriginalDraft] = useState<Draft>();
   const [audit, setAudit] = useState<Audit>();
   const [exportsData, setExportsData] = useState<Exports>();
   const [providerStatus, setProviderStatus] = useState<Record<string, SourceMode>>();
@@ -68,6 +71,7 @@ export default function Home() {
         setInputs(mergedInputs);
         setResearch(s.research); setCandidates(s.candidates); setSelected(s.selected);
         setBrief(s.brief); setDraft(s.draft); setAudit(s.audit); setExportsData(s.exports);
+        setOriginalDraft(s.originalDraft ?? s.draft);
         setProviderStatus(s.providerStatus);
       }
     } catch { /* ignore */ }
@@ -78,16 +82,40 @@ export default function Home() {
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      inputs, research, candidates, selected, brief, draft, audit, exports: exportsData, providerStatus,
+      inputs, research, candidates, selected, brief, draft, audit, exports: exportsData,
+      originalDraft, providerStatus,
     }));
-  }, [hydrated, inputs, research, candidates, selected, brief, draft, audit, exportsData, providerStatus]);
+  }, [hydrated, inputs, research, candidates, selected, brief, draft, audit, exportsData, originalDraft, providerStatus]);
 
   const part2Ready = !!selected;
 
+  /**
+   * Apply a hand-edited draft.
+   *
+   * Publishing ships exports.blogPost, not draft — so every edit MUST re-derive
+   * the audit and exports or we'd publish the original text and score the wrong
+   * draft. rederive() is pure and synchronous; the resolved category is threaded
+   * back through so this never costs an LLM call.
+   */
+  function onDraftChange(next: Draft) {
+    if (!brief) return;
+    const category = exportsData?.blogPost.category;
+    const r = rederive(next, brief, inputs, category);
+    setDraft(r.draft); setAudit(r.audit); setExportsData(r.exports);
+  }
+
+  function revertDraft() {
+    if (!originalDraft || !brief) return;
+    const r = rederive(originalDraft, brief, inputs, exportsData?.blogPost.category);
+    setDraft(r.draft); setAudit(r.audit); setExportsData(r.exports);
+  }
+
   async function runResearch() {
+    if (draft?.edited && !confirm('You have edited this draft. Running research again will discard those edits. Continue?')) return;
     setResearching(true); setError('');
     setResearch(undefined); setCandidates(undefined); setSelected(undefined);
     setBrief(undefined); setDraft(undefined); setAudit(undefined); setExportsData(undefined);
+    setOriginalDraft(undefined);
     try {
       const res = await fetch('/api/research', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(inputs),
@@ -101,8 +129,11 @@ export default function Home() {
 
   async function selectTopic(c: TopicCandidate) {
     if (!research) return;
+    // Regenerating overwrites the draft — never throw away hand edits silently.
+    if (draft?.edited && !confirm('You have edited this draft. Writing a new one will discard those edits. Continue?')) return;
     setSelected(c); setWriting(true); setError('');
     setBrief(undefined); setDraft(undefined); setAudit(undefined); setExportsData(undefined);
+    setOriginalDraft(undefined);
     try {
       const res = await fetch('/api/write', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -110,7 +141,11 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.error) { setError(data.error); }
-      else { setBrief(data.brief); setDraft(data.draft); setAudit(data.audit); setExportsData(data.exports); setTab('brief'); }
+      else {
+        setBrief(data.brief); setDraft(data.draft); setAudit(data.audit); setExportsData(data.exports);
+        setOriginalDraft(data.draft);
+        setTab('brief');
+      }
     } catch (e) { setError((e as Error).message); }
     setWriting(false);
   }
@@ -128,8 +163,10 @@ export default function Home() {
   }
 
   function reset() {
+    if (draft?.edited && !confirm('You have edited this draft. Picking a different topic will discard those edits. Continue?')) return;
     setResearch(undefined); setCandidates(undefined); setSelected(undefined);
     setBrief(undefined); setDraft(undefined); setAudit(undefined); setExportsData(undefined);
+    setOriginalDraft(undefined);
     setTab('inputs');
   }
 
@@ -190,7 +227,16 @@ export default function Home() {
         {tab === 'research' && <ResearchTab research={research} />}
         {tab === 'topics' && <RecommendedTopicsTab candidates={candidates} selected={selected} onSelect={selectTopic} loading={writing} />}
         {tab === 'brief' && <BriefTab brief={brief} />}
-        {tab === 'draft' && <DraftTab draft={draft} brief={brief} inputs={inputs} />}
+        {tab === 'draft' && (
+          <DraftTab
+            draft={draft}
+            brief={brief}
+            inputs={inputs}
+            audit={audit}
+            onDraftChange={onDraftChange}
+            onRevert={originalDraft && originalDraft !== draft ? revertDraft : undefined}
+          />
+        )}
         {tab === 'checklist' && <ChecklistTab audit={audit} />}
         {tab === 'export' && <ExportTab exports={exportsData} brief={brief} inputs={inputs} audit={audit} />}
       </main>

@@ -1,5 +1,5 @@
 import type { Draft, Brief, Inputs, BlogPostObject } from '../types';
-import { categoryByGoal } from '../modules/categoryClassifier';
+import { categoryByGoal } from '../categories';
 
 /**
  * Build the thezyra.in `BlogPost` object. `today` is injectable for stable tests.

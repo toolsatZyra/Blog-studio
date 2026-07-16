@@ -136,3 +136,29 @@ pre.export { background: #0b0b0a; border: 1px solid var(--border); border-radius
 .selected-bar { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; font-size: 13px; }
 .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--muted); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Draft editor ─────────────────────────────────────────────────────────── */
+.block-edit { position: relative; border: 1px solid transparent; border-radius: 8px; padding: 2px 6px; margin: 2px -6px; }
+.block-edit:hover { border-color: var(--border); background: rgba(255,255,255,.015); }
+.block-tools { display: none; gap: 4px; align-items: center; position: absolute; top: -11px; right: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; z-index: 2; }
+.block-edit:hover .block-tools, .block-edit:focus-within .block-tools { display: flex; }
+.iconbtn { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1; padding: 3px 4px; border-radius: 4px; }
+.iconbtn:hover:not(:disabled) { color: var(--text); background: var(--card); }
+.iconbtn:disabled { opacity: .3; cursor: not-allowed; }
+
+.edit-field { width: 100%; background: transparent; border: none; color: var(--text); font: inherit; font-size: 14px; line-height: 1.65; resize: none; overflow: hidden; padding: 4px 0; display: block; }
+.edit-field:focus { outline: none; }
+.block-edit:focus-within { border-color: var(--gold); background: rgba(201,168,118,.04); }
+.edit-field::placeholder { color: var(--muted); opacity: .6; }
+.edit-h2 { font-size: 18px; font-weight: 700; }
+.edit-h3 { font-size: 15px; font-weight: 700; }
+.edit-quote { border-left: 3px solid var(--gold); padding-left: 14px; color: var(--muted); font-style: italic; }
+.edit-list { white-space: pre-wrap; }
+.edit-cell { width: 100%; background: transparent; border: none; color: var(--text); font: inherit; font-size: 13px; padding: 0; }
+.edit-cell:focus { outline: 1px solid var(--gold); }
+
+.addblock { height: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .12s; }
+.addblock:hover { opacity: 1; }
+.addblock.open { height: auto; opacity: 1; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.addblock-line { width: 100%; height: 10px; background: transparent; border: none; border-top: 1px dashed var(--border); color: var(--muted); cursor: pointer; font-size: 11px; line-height: 1; }
+.addblock-line:hover { border-top-color: var(--gold); color: var(--gold); }
