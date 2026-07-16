@@ -240,6 +240,64 @@ export interface RunState {
   providerStatus: Record<string, SourceMode>;
 }
 
+// ── Webpage flow (/webpage → thezyra.in/solutions/[slug]) ────────────────────
+// Programmatic SEO landing pages. See
+// docs/superpowers/specs/2026-07-16-programmatic-solutions-pages-design.md
+
+/** Everything captured in the /webpage inputs panel. */
+export interface SolutionInputs {
+  industry: string; // '' allowed when geography is set
+  geography: string; // '' allowed when industry is set
+  serviceSlugs: string[]; // 0..N — OPTIONAL
+  caseStudySlugs: string[]; // 1..N — REQUIRED; order matters, first = featured
+  cta: string; // default 'Schedule a Call'
+}
+
+/** One case study on the proof contact sheet.
+ *  work-data.ts carries NO metrics — never add a results field here. */
+export interface SolutionProof {
+  workSlug: string; // links to /work/[workSlug]
+  client: string;
+  title: string;
+  category: string;
+  year: string;
+  tags: string[];
+  brief: string;
+  cfStream: string;
+  vertical: boolean;
+}
+
+/**
+ * The object the publisher appends to lp-data.ts on thezyra.in, and the
+ * contract the site's /solutions/[slug] route renders. Keep field names stable —
+ * the site reads exactly these.
+ */
+export interface SolutionPage {
+  slug: string;
+  industry: string;
+  geography: string;
+  serviceSlugs: string[];
+
+  metaTitle: string;
+  metaDescription: string;
+
+  eyebrow: string;
+  h1: string;
+  subline: string;
+  trustLine: string; // carries the derived delivery time
+  aeoAnswer: string; // 40–55 words, snippet-shaped
+
+  problemHeading: string;
+  problemBody: string[]; // exactly 3
+
+  deliverables: { num: string; title: string; desc: string }[];
+  proof: SolutionProof[]; // capped at 3; first = featured
+  process: { num: string; title: string; desc: string }[];
+  faq: { q: string; a: string }[]; // 4–6
+
+  mode: SourceMode;
+}
+
 // ── Provider interfaces (mock or live implement these) ───────────────────────
 
 export interface KeywordProvider {
