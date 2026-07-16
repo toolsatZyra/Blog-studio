@@ -1,5 +1,6 @@
 import type { SolutionInputs, SolutionPage, SolutionProof, SourceMode } from '../types';
 import { getLLM } from '../providers';
+import { parseLooseJson } from '../solutions/parseJson';
 import { ZYRA_PROOF_POINTS } from '../zyraContext';
 import { SERVICE_CATALOG, CASE_STUDY_CATALOG, PROOF_LIMIT, getCaseStudyBySlug, getServiceBySlug } from '../solutionsData';
 import { buildSolutionSlug, buildH1, buildEyebrow, servicePhrase, UMBRELLA_SERVICE } from '../solutions/naming';
@@ -28,7 +29,8 @@ HARD RULES - breaking any of these makes the page unpublishable:
 3. NEVER claim the case studies belong to the page's industry or geography. They usually do not. Do not say "our fintech clients" or "our Bengaluru work".
 4. Only these Zyra numbers may ever be stated as fact: {{PROOF_POINTS}}. No others.
 5. Write in plain ASCII. No em dashes, no en dashes, no curly quotes, no ellipsis characters.
-6. Never say "delivered in two weeks" or any delivery time other than the one supplied to you.
+6. Never state a delivery time other than the one supplied to you.
+7. Do not put double quotes inside any JSON string value. If you need to name a film or a campaign, write it plain or in single quotes. An unescaped quote breaks the response.
 
 VOICE: specific, candid, concrete. Short sentences. Active voice. No "in today's fast-paced landscape", no "unlock", "seamless", "revolutionize", "elevate", "leverage", "game-changer". Authority comes from specifics, not adjectives. Do not open with a rhetorical question.
 
@@ -62,8 +64,11 @@ function buildPrompt(inputs: SolutionInputs, proof: SolutionProof[], deliveryTim
     ].join('\n')).join('\n')
     : `- No specific service selected. Frame the page around Zyra's full range: ${SERVICE_CATALOG.map((s) => s.title).join(', ')}.`;
 
+  // No literal double quotes anywhere in this prompt. The model mirrors the
+  // style it is shown, and a quoted title came back unescaped INSIDE a JSON
+  // string value, terminating it early and breaking the parse. Use a dash.
   const proofBlock = proof.map((p) => [
-    `- ${p.client} — "${p.title}" (${p.category}, ${p.year})`,
+    `- ${p.client} - ${p.title} (${p.category}, ${p.year})`,
     `  brief: ${p.brief}`,
     `  NOTE: this project is NOT necessarily ${segmentLabel(inputs) || 'in this segment'}.`,
   ].join('\n')).join('\n');
@@ -103,15 +108,9 @@ FAQ RULES: exactly 5. Include one about whether Zyra works with this segment (an
 Return only the JSON object.`;
 }
 
-function parseJson(raw: string): LlmCopy {
-  let s = raw.trim();
-  // Models sometimes fence JSON despite being told not to.
-  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fence) s = fence[1].trim();
-  const start = s.indexOf('{');
-  const end = s.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('No JSON object in the response.');
-  const parsed = JSON.parse(s.slice(start, end + 1)) as LlmCopy;
+/** Parse + validate the model's JSON. Repairs are handled by parseLooseJson. */
+function parseCopy(raw: string): { copy: LlmCopy; repaired: string[] } {
+  const { value: parsed, repaired } = parseLooseJson<LlmCopy>(raw);
 
   const missing = (['metaTitle', 'metaDescription', 'subline', 'aeoAnswer', 'problemHeading'] as const)
     .filter((k) => typeof parsed[k] !== 'string' || !parsed[k].trim());
@@ -122,7 +121,7 @@ function parseJson(raw: string): LlmCopy {
   if (!Array.isArray(parsed.faq) || parsed.faq.length < 3) {
     throw new Error('Response needs at least 3 FAQ entries.');
   }
-  return parsed;
+  return { copy: parsed, repaired };
 }
 
 /** Strip characters the site's style rules ban, so we never ship them. */
@@ -257,22 +256,41 @@ export async function solutionGenerator(inputs: SolutionInputs): Promise<Generat
   const llm = getLLM();
 
   if (llm.liveFor('writer')) {
-    try {
-      const raw = await llm.generate({
-        role: 'writer',
-        system: SYSTEM.replace('{{PROOF_POINTS}}', ZYRA_NUMBERS),
-        prompt: buildPrompt(inputs, proof, deliveryTime),
-        maxTokens: 4000,
-        temperature: 0.7,
-      });
-      return { page: assemble(inputs, parseJson(raw), proof, deliveryTime, 'live'), warnings: [] };
-    } catch (e) {
-      // Surface the failure rather than quietly shipping the mock as if it were
-      // the real thing.
-      return {
-        page: assemble(inputs, mockCopy(inputs, deliveryTime), proof, deliveryTime, 'mock'),
-        warnings: [`Live writer (Claude) failed — showing template copy instead. ${(e as Error).message}`],
-      };
+    const system = SYSTEM.replace('{{PROOF_POINTS}}', ZYRA_NUMBERS);
+    const prompt = buildPrompt(inputs, proof, deliveryTime);
+    const warnings: string[] = [];
+
+    // Two attempts before falling back. A malformed response is usually a
+    // one-off, and template copy is a much worse outcome than a retry.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const raw = await llm.generate({
+          role: 'writer',
+          system,
+          prompt: attempt === 1
+            ? prompt
+            : `${prompt}\n\nIMPORTANT: your previous reply was not valid JSON. Return ONLY a single valid JSON object. Escape any double quote inside a string, or avoid quotes entirely.`,
+          maxTokens: 4000,
+          temperature: attempt === 1 ? 0.7 : 0.3, // tighten up on the retry
+        });
+        const { copy, repaired } = parseCopy(raw);
+        if (repaired.length) {
+          // Not fatal, but worth knowing the model's JSON needed fixing.
+          warnings.push(`Claude's JSON needed repair (${repaired.join(', ')}) — copy is intact.`);
+        }
+        return { page: assemble(inputs, copy, proof, deliveryTime, 'live'), warnings };
+      } catch (e) {
+        if (attempt === 2) {
+          // Surface the failure rather than quietly shipping template copy as if
+          // it were the real thing.
+          return {
+            page: assemble(inputs, mockCopy(inputs, deliveryTime), proof, deliveryTime, 'mock'),
+            warnings: [
+              `Live writer (Claude) failed twice — showing template copy instead. ${(e as Error).message}`,
+            ],
+          };
+        }
+      }
     }
   }
 
