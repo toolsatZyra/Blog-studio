@@ -40,11 +40,14 @@ landing page with a unique URL slug.
 
 ## Goal
 
-A new **Solutions** mode inside Zyra Blog Studio that turns
-(Industry and/or Geography) + (optional Services) + (≥1 Case Study) into a
-complete `/solutions/[slug]` landing page on thezyra.in, generated on a single
-click, SEO/AEO-optimized, grounded only in real Zyra data, and published via a
-GitHub PR (never direct to main).
+Turn the studio into a two-flow tool behind a **home screen with two cards**:
+
+- **Blog** → the existing Blog Studio pipeline, relocated to `/blog`, unchanged.
+- **Webpage** → a new flow at `/webpage` that turns (Industry and/or Geography)
+  + (optional Services) + (≥1 Case Study) into a complete `/solutions/[slug]`
+  landing page on thezyra.in — generated on a single click, SEO/AEO-optimized,
+  grounded only in real Zyra data, and published via a GitHub PR (never direct
+  to main).
 
 ## Non-goals (YAGNI)
 
@@ -58,20 +61,55 @@ GitHub PR (never direct to main).
 
 Hybrid generation: a **fixed conversion/AEO skeleton** with **LLM-written prose**
 per section, grounded in real structured data. Reuses Blog Studio's Claude
-writer, config, SEO/GEO auditor, and GitHub-PR publisher. Delivered as a new
-sidebar **mode** so the existing blog pipeline is untouched.
+writer, config, SEO/GEO auditor, and GitHub-PR publisher. Delivered behind a new
+**home screen with two cards** (Blog, Webpage), each flow on its own route, so
+the existing blog pipeline is untouched.
 
 ## Placement & architecture
 
-- New top-level mode toggle in the studio sidebar: **Blog** (existing) ↔
-  **Solutions** (new). Selecting a mode swaps the left panel and the tabbed
-  workspace; existing blog state and code paths are unchanged.
-- New Solutions-only components, new API routes, new modules. Reuses:
+### Entry point: home screen with two cards
+
+The studio root becomes a **launcher**, not the blog tool:
+
+```
+/            → Home. Two cards:
+                 ┌─────────────┐   ┌─────────────┐
+                 │   Blog      │   │  Webpage    │
+                 │ research →  │   │ industry ×  │
+                 │ write →     │   │ geo × svc → │
+                 │ publish     │   │ landing pg  │
+                 └─────────────┘   └─────────────┘
+                       │                  │
+/blog        ←─────────┘                  │
+                 existing Blog Studio     │
+                 (unchanged pipeline)     │
+/webpage     ←────────────────────────────┘
+                 new programmatic SEO flow
+```
+
+- `/` — new home screen. Two cards: **Blog** and **Webpage**. Each card carries a
+  title, a one-line description of the flow, and navigates on click.
+- `/blog` — the **existing Blog Studio, moved wholesale and otherwise
+  unchanged**: same tabs, same pipeline, same `zyra-blog-studio:v1` localStorage
+  key, same API routes. This is a relocation, not a rewrite.
+- `/webpage` — the new programmatic SEO landing-page flow specified here.
+
+**Naming note (deliberate):** the studio's internal route is `/webpage`; the
+*published* pages live on the live site at `thezyra.in/solutions/[slug]`. Two
+different apps — no collision — but the names differ on purpose: `/webpage` is
+where the operator works, `/solutions` is the public URL namespace.
+
+### Code organization
+
+- Existing blog UI moves from `app/page.tsx` to `app/blog/page.tsx` with no
+  behavioral change; a shared `app/components/ui.tsx` and the studio chrome
+  (brand, provider chips, LLM check) are reused by both flows.
+- New Webpage-only components, API routes, and modules. Reuses:
   `src/lib/providers/llm/*`, `src/lib/config.ts`, the SEO/GEO auditor
   (`src/lib/scoring/*`, `src/lib/modules/seoGeoAuditor.ts`), and the GitHub
   publisher (`src/lib/modules/publisher.ts`, generalized — see §9).
 
-## Inputs (left panel, Solutions mode)
+## Inputs (left panel, `/webpage`)
 
 - **Industry segment** — free-text `<input>` + `<datalist>` suggestions.
 - **Geography** — free-text `<input>` + `<datalist>` suggestions.
@@ -232,8 +270,12 @@ interface SolutionPage {
 - `src/lib/util.ts` — add `buildSolutionSlug()` (or a small `slug.ts`).
 - `src/lib/modules/publisher.ts` — generalize target (see §9).
 - `app/api/solutions/generate/route.ts`, `app/api/solutions/publish/route.ts`.
-- `app/page.tsx` — sidebar mode toggle.
-- `app/components/solutions/*` — InputsPanel, Preview, AuditPanel, PublishBar.
+- `app/page.tsx` — **replaced** by the new home screen (two cards: Blog, Webpage).
+- `app/blog/page.tsx` — **moved** from the current `app/page.tsx`, unchanged
+  behavior (same tabs, pipeline, and `zyra-blog-studio:v1` storage key).
+- `app/components/HomeCards.tsx` — the two launcher cards.
+- `app/webpage/page.tsx` — the new flow's screen.
+- `app/components/webpage/*` — InputsPanel, Preview, AuditPanel, PublishBar.
 
 **Site repo (via first scaffold PR):**
 - `src/lib/lp-data.ts`, `src/app/solutions/[slug]/page.tsx`.
@@ -248,6 +290,9 @@ interface SolutionPage {
 - Placeholder/publish-block guard — page with `[source needed]` is rejected.
 - Publisher insert — appends a `SolutionPage` literal into a fixture `lp-data.ts`
   without breaking the array.
+- **Blog regression** — the existing blog publisher/pipeline tests must still
+  pass unchanged after the `app/page.tsx` → `app/blog/page.tsx` move, proving the
+  relocation is behavior-preserving.
 
 ## Open decisions carried into implementation
 
