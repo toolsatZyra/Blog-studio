@@ -1,8 +1,11 @@
 // Mirror of the live site's real services + case studies.
 //
 // GENERATED from ~/Documents/GitHub/ZyraUpdated (work-data.ts, service-data.ts)
-// on 2026-07-16 - transcribing these by hand is how invented clients and wrong
-// stream ids get in. Re-generate rather than edit.
+// on 2026-07-16 - transcribing these by hand is how invented clients, wrong
+// stream ids and made-up deliverables get in. Re-generate rather than edit.
+//
+// Deliverables and process are REAL: they come from the site's own service
+// pages, so the generator never has to invent what Zyra actually delivers.
 //
 // HARD RULE: work-data.ts carries NO metrics. There is deliberately no results/
 // metrics field here. Proof may use only these fields plus a /work/[slug] link.
@@ -11,6 +14,11 @@ export interface ServiceOption {
   slug: string;
   title: string;
   label: string;
+  subtitle: string;
+  statsHeadline: string;
+  stats: { value: string; label: string }[];
+  deliverables: { title: string; desc: string }[];
+  process: { num: string; title: string; desc: string }[];
 }
 
 export interface CaseStudyOption {
@@ -27,11 +35,121 @@ export interface CaseStudyOption {
 
 /** The 5 real services. Selection is OPTIONAL (0..N). */
 export const SERVICE_CATALOG: ServiceOption[] = [
-  { slug: "ott-production", title: "AI Native Film Production", label: "Service 01" },
-  { slug: "ai-brand-films", title: "AI Brand Films & Commercials", label: "Service 02" },
-  { slug: "micro-drama-production", title: "AI Micro Drama Production", label: "Service 03" },
-  { slug: "ai-ad-creatives", title: "Performance Marketing Ads", label: "Service 04" },
-  { slug: "social-media-content", title: "Social Media Content", label: "Service 05" },
+  {
+    slug: "ott-production",
+    title: "AI Native Film Production",
+    label: "Service 01",
+    subtitle: "Full-length series, films, and specials built for streaming platforms.",
+    statsHeadline: "We made",
+    stats: [{"value":"10+","label":"Episodes"},{"value":"200hr+","label":"Content Created"}],
+    deliverables: [
+      { title: "Feature / Series Production", desc: "Full-length films or multi-episode series, streaming-spec ready." },
+      { title: "4K Cinematic Master", desc: "Colour-graded, platform-compliant 4K delivery files." },
+      { title: "Original Score & Sound", desc: "Custom soundtrack composed and mixed for the project." },
+      { title: "Multilingual Audio & Subs", desc: "Dubbed and subtitled versions for Hindi, English, Tamil, Telugu." },
+      { title: "Platform Submission Pack", desc: "Spec-compliant exports for JioCinema, MX, Amazon, Netflix, YouTube." },
+      { title: "Trailer & Promo Package", desc: "Theatrical trailer, teaser, and social promo cuts for launch." },
+    ],
+    process: [
+      { num: "01", title: "Development & Greenlight", desc: "Story, script, lookbook, and production plan. We go into production with a fully approved creative blueprint." },
+      { num: "02", title: "Pre-Production", desc: "AI-assisted visual development, storyboarding, casting brief, location design, and shoot schedule - compressed to days, not months." },
+      { num: "03", title: "Production Sprint", desc: "AI-accelerated principal production with human creative oversight at every stage." },
+      { num: "04", title: "Post & Finishing", desc: "Edit, VFX, colour grade, sound design, music, and delivery master - handled in a single integrated pipeline." },
+      { num: "05", title: "Platform Delivery", desc: "All platform-spec exports, trailers, stills, and metadata delivered with a launch-ready press package." },
+    ],
+  },
+  {
+    slug: "ai-brand-films",
+    title: "AI Brand Films & Commercials",
+    label: "Service 02",
+    subtitle: "Cinematic brand stories at the speed of culture. Five to seven day delivery.",
+    statsHeadline: "We've made",
+    stats: [{"value":"50+","label":"Brand Films & Ads Created"}],
+    deliverables: [
+      { title: "60–90s Hero Film", desc: "Full cinematic brand narrative, broadcast-ready." },
+      { title: "Cut-downs (15s / 30s)", desc: "Social and pre-roll edits from the hero film." },
+      { title: "Eye-Balls Ready Video", desc: "Colour-graded 4K delivery for streaming platforms." },
+      { title: "Multilingual Versions", desc: "Hindi, Tamil, Telugu, English - same quality, every version." },
+      { title: "Subtitle & Caption Pack", desc: "Burnt-in and SRT for accessibility and social." },
+      { title: "A/B Creative Variants", desc: "Two alternate cut approaches to test performance." },
+    ],
+    process: [
+      { num: "01", title: "Brief & Discovery", desc: "One structured session to extract brand truth, audience insight, and campaign objective. We leave with everything we need." },
+      { num: "02", title: "Concept & Storyboard", desc: "Three distinct creative directions. Full AI-visualised storyboard. You pick one, or we hybridise." },
+      { num: "03", title: "Production", desc: "AI-assisted generation, voiceover recording, music composition, and VFX in a single accelerated pipeline." },
+      { num: "04", title: "Review & Refinement", desc: "Two structured rounds of feedback. No runaway revisions. Clear, fast, decisive." },
+      { num: "05", title: "Delivery", desc: "All formats, all platforms, all resolutions. Delivered day 5-7." },
+    ],
+  },
+  {
+    slug: "micro-drama-production",
+    title: "AI Micro Drama Production",
+    label: "Service 03",
+    subtitle: "India's $10B content opportunity. We make it real.",
+    statsHeadline: "We've generated",
+    stats: [{"value":"10M+","label":"Views Generated"}],
+    deliverables: [
+      { title: "5-Episode Series", desc: "3–7 minute episodes, complete narrative arc." },
+      { title: "Mobile-First Format", desc: "9:16 primary cut, optimised for Reels, Shorts, TakaTak." },
+      { title: "Original Score", desc: "Custom music per episode - theme + scene cues." },
+      { title: "Episodic Title Cards", desc: "Branded chapter titles, recap cards, cliffhanger frames." },
+      { title: "Social Trailer Pack", desc: "15s and 30s episode teasers for pre-release distribution." },
+      { title: "Platform-Ready Masters", desc: "Spec-compliant exports for MX, JioCinema, YouTube, Instagram." },
+    ],
+    process: [
+      { num: "01", title: "Story Development", desc: "Character arcs, episode breakdowns, brand integration brief. The creative foundation everything else is built on." },
+      { num: "02", title: "Script & Storyboard", desc: "Full episode scripts with shot-by-shot AI storyboard. Approved before a single frame is rendered." },
+      { num: "03", title: "Production Sprint", desc: "All 5 episodes produced in parallel using our AI pipeline. Voiceover, music, and VFX in one continuous flow." },
+      { num: "04", title: "Series Assembly", desc: "Edit, colour grade, sound mix. Each episode reviewed and refined with one round of changes." },
+      { num: "05", title: "Launch Package", desc: "All platform masters, trailers, social assets, and a release calendar. Ready to publish." },
+    ],
+  },
+  {
+    slug: "ai-ad-creatives",
+    title: "Performance Marketing Ads",
+    label: "Service 04",
+    subtitle: "3+ variants per campaign. AI-powered. Human-approved.",
+    statsHeadline: "We've managed",
+    stats: [{"value":"2000+","label":"Ads Created"},{"value":"$10M","label":"Ad Spend Managed"}],
+    deliverables: [
+      { title: "Video Ads (6s / 15s / 30s)", desc: "Hook-first video creatives with multiple format cuts." },
+      { title: "Static Display Ads", desc: "Full-bleed statics across all IAB standard sizes." },
+      { title: "Carousel Sequences", desc: "Product-led carousel ads for Meta and Google." },
+      { title: "UGC-Style Variations", desc: "Lo-fi, authentic-feeling creatives designed to bypass ad fatigue." },
+      { title: "Refresh Packs", desc: "Monthly creative refresh to prevent audience fatigue." },
+      { title: "Naming & Taxonomy System", desc: "Structured naming so your team knows exactly what to test." },
+    ],
+    process: [
+      { num: "01", title: "Creative Brief Intake", desc: "Audience, objective, platform, budget, and winning creative benchmarks. We go into production with full context." },
+      { num: "02", title: "Hook Matrix", desc: "We map 10+ hooks across pain/gain/fear/social proof. Every variant starts with a different hook." },
+      { num: "03", title: "AI Production Sprint", desc: "All 3+ variants produced across video, static, and carousel formats in parallel." },
+      { num: "04", title: "Quality Pass", desc: "Human review of every creative. Brand safety, messaging accuracy, and platform compliance checked." },
+      { num: "05", title: "Delivery & Taxonomy", desc: "Organised delivery with naming convention, platform specs, and recommended test structure." },
+    ],
+  },
+  {
+    slug: "social-media-content",
+    title: "Social Media Content",
+    label: "Service 05",
+    subtitle: "20+ pieces per week. Always on. Always sharp.",
+    statsHeadline: "We've generated",
+    stats: [{"value":"60M+","label":"Views Generated"}],
+    deliverables: [
+      { title: "Reels & Short-Form Video", desc: "6–60s vertical video for Instagram, YouTube Shorts, TakaTak." },
+      { title: "Carousels & EDU Posts", desc: "Swipeable carousels for product, tips, and thought leadership." },
+      { title: "Static Feed Posts", desc: "On-brand static posts for feed curation and announcements." },
+      { title: "Story Templates", desc: "24-hour story sequences - polls, countdowns, product reveals." },
+      { title: "Caption & Copy Library", desc: "Hook-led captions, hashtag sets, and CTA copy for every post." },
+      { title: "Weekly Content Calendar", desc: "Structured posting schedule aligned to campaign moments." },
+    ],
+    process: [
+      { num: "01", title: "Brand & Audience Audit", desc: "We analyse your existing content performance, competitor benchmarks, and audience behaviour patterns before writing a single brief." },
+      { num: "02", title: "Monthly Content Strategy", desc: "Themes, campaigns, and a content mix mapped to your business calendar and platform algorithms." },
+      { num: "03", title: "Weekly Production Sprint", desc: "20+ pieces produced each week - video, static, carousels - ahead of schedule so your team can review without pressure." },
+      { num: "04", title: "Approval & Scheduling", desc: "You approve via a shared review board. We handle scheduling and platform publishing." },
+      { num: "05", title: "Monthly Performance Review", desc: "Data-led review of what worked. The next month's strategy adapts based on performance." },
+    ],
+  },
 ];
 
 /** All 22 real case studies. Selection is REQUIRED (>=1); only the
