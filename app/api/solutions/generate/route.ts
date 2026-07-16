@@ -1,27 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { solutionGenerator } from '@/lib/modules/solutionGenerator';
 import { buildSolutionSchema } from '@/lib/solutions/schema';
-import { findGuardHits, explainGuardHits } from '@/lib/solutions/guards';
+import { findGuardHits, explainGuardHits, auditFields } from '@/lib/solutions/guards';
 import type { SolutionInputs } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
-
-/** Every string that will be published, including the serialized JSON-LD. */
-function auditFields(page: Awaited<ReturnType<typeof solutionGenerator>>['page']) {
-  const fields: Record<string, string> = {
-    metaTitle: page.metaTitle,
-    metaDescription: page.metaDescription,
-    subline: page.subline,
-    trustLine: page.trustLine,
-    aeoAnswer: page.aeoAnswer,
-    problemHeading: page.problemHeading,
-    'JSON-LD schema': JSON.stringify(buildSolutionSchema(page)),
-  };
-  page.problemBody.forEach((p, i) => { fields[`problemBody[${i + 1}]`] = p; });
-  page.faq.forEach((f, i) => { fields[`faq[${i + 1}]`] = `${f.q} ${f.a}`; });
-  return fields;
-}
 
 export async function POST(req: NextRequest) {
   try {

@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 
 import {
   buildSolutionSlug, uniqueSlug, buildH1, buildEyebrow, servicePhrase, UMBRELLA_SERVICE,
+  normalizeSegment,
 } from '../src/lib/solutions/naming.ts';
 import { deliveryTimeFor } from '../src/lib/solutions/delivery.ts';
 import { proofDisclaimer } from '../src/lib/solutions/disclaimer.ts';
 import { buildSolutionSchema, solutionUrl } from '../src/lib/solutions/schema.ts';
-import { findGuardHits, explainGuardHits } from '../src/lib/solutions/guards.ts';
+import { findGuardHits, explainGuardHits, auditFields } from '../src/lib/solutions/guards.ts';
 import { SERVICE_CATALOG, CASE_STUDY_CATALOG, PROOF_LIMIT } from '../src/lib/solutionsData.ts';
 import type { SolutionInputs, SolutionPage } from '../src/lib/types.ts';
 
@@ -375,4 +376,75 @@ test('CONSTRAINT: proof never claims to be from the page industry/geo', async ()
   const proofText = page.proof.map((p) => `${p.client} ${p.title} ${p.brief}`).join(' ');
   assert.ok(!/fintech/i.test(proofText), 'Cars24/Swiggy are not fintech; copy must not say so');
   assert.ok(!/bengaluru/i.test(proofText));
+});
+
+// ── every combination must be publishable ───────────────────────────────────
+// The catalog is real site copy, and real copy contains money the pages ban:
+// micro-drama's subtitle is "India's $10B content opportunity". When it reached
+// the deliverables slot, EVERY no-service page became unpublishable.
+
+test('an umbrella page (no service selected) is publishable', async () => {
+  const { page } = await solutionGenerator({
+    industry: 'Learning & Development',
+    geography: 'India',
+    serviceSlugs: [],
+    caseStudySlugs: ['cars24'],
+    cta: 'Schedule a Call',
+  });
+  const hits = findGuardHits(auditFields(page));
+  assert.deepEqual(hits, [], `umbrella page blocked: ${explainGuardHits(hits).join(' | ')}`);
+});
+
+test('every service selection produces a publishable page', async () => {
+  for (const serviceSlugs of [[] as string[], ...SERVICE_CATALOG.map((s) => [s.slug])]) {
+    const { page } = await solutionGenerator({
+      industry: 'Fintech',
+      geography: 'Bengaluru',
+      serviceSlugs,
+      caseStudySlugs: ['cars24'],
+      cta: 'Schedule a Call',
+    });
+    const hits = findGuardHits(auditFields(page));
+    assert.deepEqual(hits, [], `${serviceSlugs[0] ?? 'umbrella'}: ${explainGuardHits(hits).join(' | ')}`);
+  }
+});
+
+// Two copies of auditFields drifted: generate omitted deliverables, publish
+// scanned them. The studio showed a clean page and refused it at publish.
+test('auditFields scans the catalog-supplied copy the page publishes', async () => {
+  const { page } = await solutionGenerator({
+    industry: 'Fintech', geography: '', serviceSlugs: [], caseStudySlugs: ['cars24'], cta: 'x',
+  });
+  const keys = Object.keys(auditFields(page));
+  for (const prefix of ['deliverables[', 'process[', 'proof[']) {
+    assert.ok(keys.some((k) => k.startsWith(prefix)), `${prefix}] is published copy and must be scanned`);
+  }
+});
+
+// ── operator input is free text ─────────────────────────────────────────────
+
+test('a lowercase segment is title-cased everywhere it renders', async () => {
+  const { page } = await solutionGenerator({
+    industry: 'learning & development',
+    geography: 'india',
+    serviceSlugs: [],
+    caseStudySlugs: ['cars24'],
+    cta: 'Schedule a Call',
+  });
+  assert.equal(page.h1, 'AI Content Production for Learning & Development in India');
+  assert.equal(page.eyebrow, 'Learning & Development · India');
+  assert.equal(page.industry, 'Learning & Development');
+  assert.equal(page.geography, 'India');
+  assert.equal(page.slug, 'learning-and-development/india', 'the slug stays lowercase');
+});
+
+test('title-casing a segment leaves acronyms and real casing alone', () => {
+  assert.equal(normalizeSegment('india'), 'India');
+  assert.equal(normalizeSegment('fintech'), 'Fintech');
+  assert.equal(normalizeSegment('new delhi'), 'New Delhi');
+  assert.equal(normalizeSegment('SaaS'), 'SaaS');
+  assert.equal(normalizeSegment('d2c'), 'D2C');
+  assert.equal(normalizeSegment('uae'), 'UAE');
+  assert.equal(normalizeSegment('Learning & Development'), 'Learning & Development');
+  assert.equal(normalizeSegment(''), '');
 });

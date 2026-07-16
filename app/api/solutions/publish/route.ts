@@ -1,30 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { publishSolutionToGitHub } from '@/lib/modules/solutionPublisher';
-import { buildSolutionSchema } from '@/lib/solutions/schema';
-import { findGuardHits, explainGuardHits } from '@/lib/solutions/guards';
+import { findGuardHits, explainGuardHits, auditFields } from '@/lib/solutions/guards';
 import { uniqueSlug } from '@/lib/solutions/naming';
 import { isLive } from '@/lib/config';
 import type { SolutionPage } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
-
-/** Every string that would be published, including the serialized JSON-LD. */
-function auditFields(page: SolutionPage): Record<string, string> {
-  const fields: Record<string, string> = {
-    metaTitle: page.metaTitle,
-    metaDescription: page.metaDescription,
-    subline: page.subline,
-    trustLine: page.trustLine,
-    aeoAnswer: page.aeoAnswer,
-    problemHeading: page.problemHeading,
-    'JSON-LD schema': JSON.stringify(buildSolutionSchema(page)),
-  };
-  page.problemBody.forEach((p, i) => { fields[`problemBody[${i + 1}]`] = p; });
-  page.faq.forEach((f, i) => { fields[`faq[${i + 1}]`] = `${f.q} ${f.a}`; });
-  page.deliverables.forEach((d, i) => { fields[`deliverables[${i + 1}]`] = `${d.title} ${d.desc}`; });
-  return fields;
-}
 
 export async function POST(req: NextRequest) {
   try {

@@ -25,6 +25,30 @@ function slugToPhrase(slug: string): string {
   return smartTitle(slug.replace(/-/g, ' '));
 }
 
+/**
+ * Title-case an operator's free-text industry/geography.
+ *
+ * The operator types into a plain input, so "india" arrives lowercase and lands
+ * verbatim in the H1 - the most visible line on the page - while Claude writes
+ * "India" in the meta description beside it. smartTitle fixes the case without
+ * mangling what was already right: SaaS stays SaaS, d2c becomes D2C.
+ *
+ * The slug is unaffected: it lowercases everything anyway.
+ */
+export function normalizeSegment(s: string): string {
+  return smartTitle(s.trim());
+}
+
+/** Normalize the free-text segments once, at the entry point, so the prompt,
+ *  H1, eyebrow, page fields and disclaimer all render the same string. */
+export function normalizeSolutionInputs(inputs: SolutionInputs): SolutionInputs {
+  return {
+    ...inputs,
+    industry: normalizeSegment(inputs.industry),
+    geography: normalizeSegment(inputs.geography),
+  };
+}
+
 /** URL part for the service: the single selected slug, else the umbrella. */
 export function serviceSlugPart(serviceSlugs: string[]): string {
   const known = serviceSlugs.filter((s) => getServiceBySlug(s));

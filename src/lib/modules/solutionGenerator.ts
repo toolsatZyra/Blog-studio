@@ -3,7 +3,7 @@ import { getLLM } from '../providers';
 import { parseLooseJson } from '../solutions/parseJson';
 import { ZYRA_PROOF_POINTS } from '../zyraContext';
 import { SERVICE_CATALOG, CASE_STUDY_CATALOG, PROOF_LIMIT, getCaseStudyBySlug, getServiceBySlug } from '../solutionsData';
-import { buildSolutionSlug, buildH1, buildEyebrow, servicePhrase, UMBRELLA_SERVICE } from '../solutions/naming';
+import { buildSolutionSlug, buildH1, buildEyebrow, servicePhrase, UMBRELLA_SERVICE, normalizeSolutionInputs } from '../solutions/naming';
 import { deliveryTimeFor } from '../solutions/delivery';
 
 // Generates a /solutions landing page from a handful of inputs.
@@ -158,9 +158,16 @@ function resolveDeliverables(serviceSlugs: string[]): { num: string; title: stri
   const chosen = serviceSlugs.map(getServiceBySlug).filter(Boolean);
   const source = chosen.length
     ? chosen.flatMap((s) => s!.deliverables)
-    // No service selected -> widen to one line per service rather than inventing
-    // a generic list.
-    : SERVICE_CATALOG.map((s) => ({ title: s.title, desc: s.subtitle }));
+    // No service selected -> one line per service rather than inventing a
+    // generic list. The desc lists that service's real deliverables; it does NOT
+    // use s.subtitle. A subtitle is a positioning tagline, not a description of
+    // what arrives - and micro-drama's is "India's $10B content opportunity",
+    // which is money, which these pages ban. Under a heading that says
+    // "Everything included", the deliverable names are the honest answer anyway.
+    : SERVICE_CATALOG.map((s) => ({
+      title: s.title,
+      desc: `${s.deliverables.slice(0, 3).map((d) => d.title).join(', ')}.`,
+    }));
   return source.slice(0, 6).map((d, i) => ({
     num: String(i + 1).padStart(2, '0'),
     title: d.title,
@@ -245,7 +252,8 @@ export interface GeneratedSolution {
 }
 
 /** Generate the whole page from the inputs. One call, one page. */
-export async function solutionGenerator(inputs: SolutionInputs): Promise<GeneratedSolution> {
+export async function solutionGenerator(raw: SolutionInputs): Promise<GeneratedSolution> {
+  const inputs = normalizeSolutionInputs(raw);
   const proof = resolveProof(inputs.caseStudySlugs);
   if (!proof.length) throw new Error('Pick at least one case study — the page needs real proof.');
   if (!inputs.industry.trim() && !inputs.geography.trim()) {
