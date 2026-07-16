@@ -14,7 +14,10 @@ import type { SolutionPage } from '@/lib/types';
 // link survives a reload. A SolutionPage is ~10KB, so ~13KB base64 - far below
 // any browser's URL limit.
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3007';
+// Default to the LIVE site, not localhost. The deployed studio is the common
+// case and it has no .env, so a localhost default sent everyone to a dead
+// address on their own machine. Local dev overrides this in .env.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thezyra.in';
 const PREVIEW_URL = `${SITE}/solutions/preview`;
 
 /** base64 that survives non-ASCII copy (curly quotes, ₹, etc.). */
