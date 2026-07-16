@@ -1,21 +1,37 @@
 # Programmatic Solutions Pages — SEO/AEO landing pages from Industry × Geo × Service
 
 **Date:** 2026-07-16
-**Status:** Draft — **layout LOCKED** (Option E — Hybrid), awaiting review of the rest
+**Status:** **FINAL** — layout locked, all blockers answered (user, 2026-07-16)
 
-## Locked template (authoritative reference)
+## Document precedence — read all three
 
-The page layout is **decided and frozen**: **Option E — Hybrid**.
+This spec does **not** stand alone.
 
-- **Approved reference:** `solutions-template-mockups/option-e-hybrid.html`
-  (repo-relative to the ZYRA iCloud folder). This file is the **visual source of
-  truth** for the implementation — match it, don't reinterpret it.
-- **Decision record + rationale + rejected options:**
-  `solutions-template-mockups/TEMPLATE-DECISION.md`
-- **Tokens, approved copy, honesty rules:** `solutions-template-mockups/_SHARED-KIT.md`
+| Document | Authority |
+|---|---|
+| **This spec** | Architecture, API routes, types, slug rules, publisher/PR flow, studio UI (`/blog` + `/webpage`), and **every decision recorded below** |
+| `solutions-template-mockups/TEMPLATE-DECISION.md` | Layout, section order, slots, fixed chrome, copy + honesty rules. **Supersedes this spec's "Page skeleton"** |
+| `solutions-template-mockups/option-e-hybrid.html` | **Source of truth for anything visual.** Prose describes it; the file *is* it |
 
-Verified against the reference file: **14 body slots**, exactly **3 CTAs**
-(hero, sticky bar, final band), valid `FAQPage` schema, and no price leak.
+`_SHARED-KIT.md` holds design tokens, verbatim approved copy, and real
+Cloudflare thumbnail URLs.
+
+> **⚠ Where THIS spec overrides TEMPLATE-DECISION.md.** The decisions in
+> "Delivery time" and "Money" below were taken by the user **after** that
+> document was written. Where they conflict, **this spec wins** — including the
+> `option-e-hybrid.html` Problem-section copy, which still contains the ₹30–80L
+> figure that is now banned. Do not re-add it by copying the mockup verbatim.
+
+**Slot inventory: 27 slots** (authoritative — from TEMPLATE-DECISION.md). The
+mockup's "Show variable slots" overlay tags only the **14** major blocks via
+`data-slot`, so the overlay shows fewer than exist. The difference: 5 head/meta
+(`slug`, `meta_title`, `meta_description`, `canonical`, `schema_jsonld`), 2
+disclaimer interpolations (`industry`, `geography`), and 6 sub-elements
+(`cta_label`, `context_string`, `delivery_stat`, `delivery_time`,
+`problem_ghost`, `problem_stat_label`). **Spec from the list, not the overlay.**
+
+Verified against the reference file: exactly **3 CTAs** (hero, sticky bar, final
+band), valid `FAQPage` schema, no Zyra price leak.
 
 ## Problem
 
@@ -218,6 +234,58 @@ Exactly **3 CTAs per page**: hero, sticky bar, final band. **None in the nav.**
 - Each fires its own GA4 `lead_*` event (the site-wide GA4 lead tracking is
   already live — reuse those event names, don't invent new ones).
 
+## Delivery time — DECIDED (user, 2026-07-16)
+
+`{{delivery_time}}` / `{{delivery_stat}}` are **driven by the selected
+service(s)**. The generator must **never emit one global delivery number.**
+
+| Service slug | Format | Delivery |
+|---|---|---|
+| `ai-brand-films` | horizontal 16:9 | **5–7 days** |
+| `ai-ad-creatives` | vertical 9:16 | **about a day** |
+| `social-media-content` | vertical 9:16 | **about a day** |
+| `micro-drama-production` | **vertical 9:16** | **1 episode = 1 day** → a 5-episode series ≈ **5 days** |
+| `ott-production` | horizontal | **8–10 weeks** (4-episode series), **6–8 weeks** (feature) |
+
+- **Standard timeline** (no service context): **5–7 days**.
+- **Multi-service selected** → state the **range**, don't pick one:
+  *"from about a day for vertical formats to 5–7 days for a brand film."*
+- **No service selected** → same range phrasing.
+- **OTT is NOT covered by the 1-day/5–7-day rule.** Its 8–10 weeks is correct and
+  stands. Never apply the fast-format rule to OTT.
+
+**Verified against source, correcting TEMPLATE-DECISION.md:**
+- Micro-drama is **vertical 9:16** — all 4 Micro Drama projects in `work-data.ts`
+  are `vertical: true` with no `playerVertical` override. (A passing remark that
+  it is "horizontal" was checked against the data and rejected by the user.)
+- The "5–6 weeks" that TEMPLATE-DECISION.md attributes to OTT is actually
+  **micro-drama's** number (`service-data.ts:197`, inside the block whose slug is
+  declared at :154). OTT's own claim is at `:94`. The two were conflated.
+
+## Problem stat — DECIDED (user, 2026-07-16)
+
+`{{problem_stat}}` stays **studio-wide**: **"3 Months to Weeks"**. Not
+per-service. Ghost numeral carries the end state only ("Weeks") because the full
+phrase cannot render at 380px. Accepted trade-off: it understates speed for the
+fastest formats; it reads as a studio-wide umbrella.
+
+## Money — DECIDED (user, 2026-07-16) — OVERRIDES TEMPLATE-DECISION.md
+
+**No money on a `/solutions` page. Time only.**
+
+- **No Zyra price** — not in copy, trust line, meta, or **`FAQPage` JSON-LD**
+  (schema reaches Google and AI answer engines even when invisible on the page).
+- **No ₹30–80L industry figure either.** This **reverses** TEMPLATE-DECISION.md,
+  which permitted it as "the contrast the pitch rests on". The Problem section
+  contrasts on **time alone** ("3 Months to Weeks"), never cost.
+- `option-e-hybrid.html`'s Problem prose still contains "₹30–80L" — **that copy
+  must be rewritten**, and is the one place the mockup is not the source of truth.
+- Publish guard rejects any page whose copy or JSON-LD contains a currency
+  amount (`₹`, `Rs`, `INR`, `lakh`, `crore`, `$`).
+
+*(Scope note: this ban applies to the NEW `/solutions` pages only. The live site
+keeps its existing real prices — see the live-site work order below.)*
+
 ## Grounding & honesty rules (non-negotiable — generator must enforce)
 
 - LLM receives Zyra's real context + the resolved service/case-study data and is
@@ -225,16 +293,26 @@ Exactly **3 CTAs per page**: hero, sticky bar, final band. **None in the nav.**
 - **1. No fabricated metrics.** `work-data.ts` carries **no results**. Proof =
   client, title, category, year, tags, brief, thumbnail, `/work/[slug]` link.
   Nothing else. Verified in source.
-- **2. Never state Zyra's own price.** Not in copy, not in the trust line, and
+- **2. No money on the page at all — time only.** Not Zyra's price, and **not**
+  the ₹30–80L industry figure either. Not in copy, not in the trust line, and
   **not in the `FAQPage` JSON-LD** — schema leaks to Google and AI answer engines
   even when invisible on the page. *This was a real near-miss caught in the
-  mockups.* The `₹30–80L` **industry** figure is fine; it's the contrast the pitch
-  rests on. (See the standing pricing rule.)
-- **3. The proof disclaimer is fixed chrome and cannot be removed:**
-  > Selected from Zyra's full body of work. Not all projects shown are fintech or
-  > Bengaluru-based — each links to its full case study.
+  mockups.* See the **Money** decision above, which is authoritative and reverses
+  TEMPLATE-DECISION.md's allowance of ₹30–80L.
+- **3. The proof disclaimer is fixed chrome and cannot be removed.** Its
+  *structure* is fixed; the industry/geo words are **interpolated** — do NOT
+  hardcode "fintech/Bengaluru":
 
-  *(Industry/geo words in that line are slot-filled per combo.)* Any combo can
+  > Selected from Zyra's full body of work. Not all projects shown are
+  > `{{industry}}` or `{{geography}}`-based — each links to its full case study.
+
+  **Degenerate cases the generator must handle** (one of industry/geo is always
+  absent-able, since only one is required):
+  - both → "…are fintech or Bengaluru-based — each links to its full case study."
+  - industry only → "…are fintech."
+  - geography only → "…are Bengaluru-based."
+
+  The sentence must stay grammatical when either input is missing. Any combo can
   select case studies that don't match its own H1 — e.g. Fintech × Bengaluru,
   where only Goodscore is fintech and none are Bengaluru projects. Without this
   line the page implies client relationships and geographies that do not exist.
@@ -403,6 +481,53 @@ interface SolutionPage {
 3. ~~Template/layout~~ — **RESOLVED**: Option E — Hybrid, locked.
    `option-e-hybrid.html` is the visual source of truth.
 4. ~~Edge cases (no service / 5+ case studies)~~ — **RESOLVED**, see above.
+
+## Dead code — do NOT resurrect (verified 2026-07-16)
+
+`TestimonialsSection.tsx` and `StatsSection.tsx` are **rendered nowhere** —
+confirmed: the home page renders Hero, LogoTicker, ZyraManifesto, FourStudios,
+Work, GetInTouch only. They read `dummy-content.ts`, which contains **fabricated**
+content: a fake testimonial ("Rahul Mehta, CMO, TechVenture Inc", `:110`) and
+unsourced `STATS` (`:98–104`). Wiring either up ships a fabricated testimonial.
+**The `/solutions` template must not use them.**
+
+*(But note `dummy-content.ts:35` — "Delivered in 2 weeks." — **IS live**, via
+`SERVICES` → `FourStudiosSection.tsx:108` on the home page. TEMPLATE-DECISION.md
+left this as "check render path first"; it is checked, and it is live.)*
+
+## Live-site work order (SEPARATE scope — site repo, not this feature)
+
+The `/solutions` pages link to `/services/*` and `/work/*`. Those pages currently
+**contradict** the delivery times decided above — a `/solutions` page claiming
+"5–7 days" linking to a service page saying "Delivered day 14" is a public
+self-contradiction that Google reads too. **Fix the site before, or alongside,
+shipping `/solutions`.** Every line verified by grep 2026-07-16.
+
+| File:line | Current | Change to |
+|---|---|---|
+| `service-data.ts:106` | subtitle "…Two-week delivery." | 5–7 days |
+| `service-data.ts:109` | metaTitle "…Zyra - 2-Week Delivery" | 5–7 days — **indexed title tag** |
+| `service-data.ts:110` | metaDesc "…delivered in 2 weeks." | 5–7 days — **indexed** |
+| `service-data.ts:138` | process 05 "Delivered **day 14**." | day 5–7 |
+| `service-data.ts:142` | FAQ "compresses 3-month … into 2 weeks" | 5–7 days |
+| `service-data.ts:144` | FAQ "What is included in the **2-week delivery**?" | question text itself |
+| `service-data.ts:172` | micro-drama "delivered in under 6 weeks" | ~5 days (1 ep/day) |
+| `service-data.ts:197` | micro-drama FAQ "5-episode series: **5–6 weeks**" | ~5 days |
+| `faq/page.tsx:36` | "standard timeline **10–14 days**… micro drama **3–4 weeks**" | 5–7 days · ~5 days |
+| `dummy-content.ts:35` | "Delivered in 2 weeks." (**live** via FourStudiosSection) | 5–7 days |
+| `blog-data.ts:24` | published blog "takes two weeks" | 5–7 days — **live, indexed** |
+| `service-data.ts:116` | `problemStat: '3 Months'` | apply "3 Months to Weeks" |
+| `globals.css` | `--color-gold: #FFFFFF` | `#C9A96E` (matches shipped CTA) |
+
+**Leave alone (verified NOT delivery claims):**
+- `service-data.ts:94` — OTT 8–10 weeks / feature 6–8 weeks: **correct, keep**.
+- `service-data.ts:300` — "standard engagement is 3 months": social-media
+  **retainer**, not a production timeline.
+- `terms/page.tsx:21` — "14 days": **invoice** terms.
+- `blog-data.ts:57` — "2-week post-series survey": a **survey window**.
+- **All ₹ prices stay.** User decision 2026-07-16: the live site's prices
+  (₹4–8L, ₹3–4L, ₹6–25L) are real numbers — keep them. The no-money rule applies
+  to the new `/solutions` pages only.
 
 ## Follow-ups (out of scope here — site repo, non-blocking)
 
