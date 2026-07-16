@@ -43,6 +43,9 @@ export const env = {
     repo: process.env.PUBLISH_REPO || 'toolsatZyra/ZyraUpdated',
     baseBranch: process.env.PUBLISH_BASE_BRANCH || 'master',
     blogDataPath: process.env.PUBLISH_BLOG_DATA_PATH || 'src/lib/blog-data.ts',
+    // Programmatic /solutions landing pages live in their own array, so the two
+    // flows can never corrupt each other's data file.
+    lpDataPath: process.env.PUBLISH_LP_DATA_PATH || 'src/lib/lp-data.ts',
   },
 };
 

@@ -235,3 +235,28 @@ pre.export { background: #0b0b0a; border: 1px solid var(--border); border-radius
 }
 .proof-list li:last-child { border-bottom: none; }
 .proof-list li .badge { flex: 0 0 auto; }
+
+/* ── Solution preview ─────────────────────────────────────────────────────── */
+.slug-chip {
+  font-size: 11px; background: #0b0b0a; border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px 8px; color: var(--gold);
+}
+.answer-card {
+  background: rgba(255,255,255,.04); border: 1px solid var(--border-light, #2c2c28);
+  border-radius: 10px; padding: 14px; margin: 16px 0;
+}
+.proof-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
+.proof-grid figure { margin: 0; }
+.proof-grid img {
+  width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--border); display: block;
+}
+.proof-grid figcaption { font-size: 12px; margin-top: 6px; line-height: 1.5; }
+.proof-grid .featured img { border-color: var(--gold); }
+.disclaimer { border-left: 2px solid var(--border-light, #2c2c28); padding-left: 10px; }
+
+
+/* Publish next-steps: the PR's Vercel preview is where you see the real page. */
+.next-steps { margin: 8px 0 14px; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.next-steps li { margin-bottom: 4px; }
+.next-steps strong { color: var(--text); }
