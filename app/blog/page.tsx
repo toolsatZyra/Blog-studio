@@ -173,7 +173,7 @@ export default function Home() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand"><h1>Zyra Blog Studio</h1><span className="dot">●</span></div>
+        <div className="brand"><h1>Blog</h1><span className="dot">●</span></div>
         <p className="subtitle">Research → recommend → write → audit → export. Runs on mocks with zero keys.</p>
         {providerStatus && (
           <div className="chips" style={{ marginBottom: 8 }}>

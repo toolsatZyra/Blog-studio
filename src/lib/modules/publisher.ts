@@ -133,7 +133,7 @@ export async function publishToGitHub(
       head: branch,
       base: baseBranch,
       body:
-        `Adds a new post to \`${blogDataPath}\` via Zyra Blog Studio.\n\n` +
+        `Adds a new post to \`${blogDataPath}\` via Zyra Studio.\n\n` +
         `- **Slug:** \`${post.slug}\`\n- **Category:** ${post.category}\n- **Read time:** ${post.readTime}\n\n` +
         `Review the copy, swap the poster image, and merge to publish at \`/blog/${post.slug}\`.${posterNote}`,
     }),

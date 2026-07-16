@@ -2,7 +2,7 @@
   "name": "zyra-blog-studio",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal tool that automates Zyra's SEO/GEO/AEO blog writing workflow.",
+  "description": "Internal tool that builds two things for thezyra.in: SEO/GEO/AEO blog posts, and programmatic SEO landing pages.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
