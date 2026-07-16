@@ -162,3 +162,26 @@ pre.export { background: #0b0b0a; border: 1px solid var(--border); border-radius
 .addblock.open { height: auto; opacity: 1; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
 .addblock-line { width: 100%; height: 10px; background: transparent; border: none; border-top: 1px dashed var(--border); color: var(--muted); cursor: pointer; font-size: 11px; line-height: 1; }
 .addblock-line:hover { border-top-color: var(--gold); color: var(--gold); }
+
+/* ── Home launcher ────────────────────────────────────────────────────────── */
+.launcher { max-width: 960px; margin: 0 auto; padding: 72px 24px; }
+.launcher-head { margin-bottom: 32px; }
+.launcher-head h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.launcher-head .subtitle { margin: 0; }
+
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card-link {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; text-decoration: none; color: var(--text);
+  transition: border-color .15s, transform .15s, background .15s;
+}
+.card-link:hover { border-color: var(--gold); background: #232320; transform: translateY(-2px); }
+.card-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.card-title { font-size: 22px; font-weight: 600; }
+.card-blurb { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.card-steps {
+  font-size: 11px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;
+}
+.card-go { color: var(--gold); font-size: 13px; font-weight: 600; margin-top: 2px; }
