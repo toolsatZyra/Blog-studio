@@ -1,7 +1,21 @@
 # Programmatic Solutions Pages — SEO/AEO landing pages from Industry × Geo × Service
 
 **Date:** 2026-07-16
-**Status:** Draft (awaiting user review)
+**Status:** Draft — **layout LOCKED** (Option E — Hybrid), awaiting review of the rest
+
+## Locked template (authoritative reference)
+
+The page layout is **decided and frozen**: **Option E — Hybrid**.
+
+- **Approved reference:** `solutions-template-mockups/option-e-hybrid.html`
+  (repo-relative to the ZYRA iCloud folder). This file is the **visual source of
+  truth** for the implementation — match it, don't reinterpret it.
+- **Decision record + rationale + rejected options:**
+  `solutions-template-mockups/TEMPLATE-DECISION.md`
+- **Tokens, approved copy, honesty rules:** `solutions-template-mockups/_SHARED-KIT.md`
+
+Verified against the reference file: **14 body slots**, exactly **3 CTAs**
+(hero, sticky bar, final band), valid `FAQPage` schema, and no price leak.
 
 ## Problem
 
@@ -30,7 +44,7 @@ landing page with a unique URL slug.
 | Service Type — **optional** multi-select of the services we provide | 0..N of the 5 real services | Optional; drives the "What we deliver" section |
 | **suited for the input combination** | Copy is tailored to industry/geo/service | LLM writes each section grounded in the combo |
 | **SEO/AEO optimized** | Meta, schema, internal links, snippet-ready answer | See §6 |
-| **convert … click a CTA … schedule a call** | Primary goal = book a call | Multiple "Schedule a call" CTAs; conversion structure |
+| **convert … click a CTA … schedule a call** | Primary goal = book a call | Exactly 3 "Schedule a Call" CTAs (hero, sticky bar, final band) → Calendly |
 | **ask us to choose from the list of case studies … one or more** | Case-study selection is a **required step**, min 1 | UI blocks Generate until ≥1 case study is selected |
 | **On click, the whole page should be generated** | Single action produces the full page | One "Generate" click assembles all sections |
 | **unique url slug** | Deterministic, keyword-rich, collision-free | See §7 |
@@ -117,12 +131,32 @@ where the operator works, `/solutions` is the public URL namespace.
 - **Services** — multi-select (checkboxes) over the 5 services from the site's
   `service-data.ts`, mirrored into a local constant (`src/lib/solutionsData.ts`).
   Optional (0..N).
-- **Case studies** — multi-select checklist over the 24 projects from the site's
-  `work-data.ts`, mirrored locally. Grouped by category; projects whose category
-  matches a selected service are surfaced first. **Required: ≥1.**
-- **Primary CTA label** — defaults to `Schedule a call`.
+- **Case studies** — multi-select checklist over the **22** projects from the
+  site's `work-data.ts`, mirrored locally. Grouped by category; projects whose
+  category matches a selected service are surfaced first. **Required: ≥1.**
+  - **Only the first 3 selections are rendered** (see Edge case 2). The picker
+    **must say so at selection time** — e.g. once a 4th is ticked, show
+    "Only the first 3 are shown on the page, plus a View all link" — rather than
+    silently discarding the operator's choices.
+  - **Selection order is meaningful**: the first-picked case study becomes the
+    featured one in the contact sheet.
+- **Primary CTA label** — defaults to `Schedule a Call`.
 
 Generate is enabled only when: (≥1 of industry/geo) **AND** (≥1 case study).
+
+## Edge cases — DECIDED (user, 2026-07-16)
+
+1. **No service selected** (services are optional):
+   - H1 = **"AI Content Production for {Industry} in {Geo}"** — one neutral
+     umbrella phrase covering all 5 services, so the H1 stays keyword-rich and
+     predictable for every combo.
+   - "What we deliver" widens to a concise **all-services frame**.
+   - `{{eyebrow}}` drops the service segment → "{Industry} · {Geo}".
+2. **5+ case studies selected:**
+   - The contact sheet **caps at 3** (featured + 2 stacked) plus a **"View all"**
+     link to `/work`. Extras are dropped rather than breaking the 58/42
+     composition.
+   - Consequence surfaced in the operator UI (see Inputs above).
 
 ## Data flow
 
@@ -143,33 +177,74 @@ SolutionPage ─► POST /api/solutions/publish
   → append object to src/lib/lp-data.ts on the site repo via GitHub PR
 ```
 
-## Page skeleton (fixed 8 sections)
+## Page skeleton — Option E — Hybrid (LOCKED)
 
-Rendered top-to-bottom; order is fixed (approved):
+Top-to-bottom. **Fixed chrome** never varies; **slots** are generator-filled.
+Authoritative rendering: `option-e-hybrid.html`.
 
-1. **Hero** — H1 = `{Service(s)} for {Industry} {in Geography}`, one-line value
-   prop, primary `Schedule a call` CTA.
-2. **AEO answer block** — 40–55 word direct answer to the page's implied query
-   (featured-snippet / AI-Overview shaped).
-3. **Problem framing** — the specific pain for this industry/geo segment.
-4. **What we deliver** — the selected service(s), sourced from `service-data.ts`
-   (deliverables, process); if no service selected, a concise all-services frame.
-5. **Proof / case studies** — the selected projects, using **only real fields**
-   (client, title, category, year, tags, brief) + a link to `/work/[slug]`.
-6. **Process** — how an engagement runs (trust before the ask).
-7. **FAQ** — 4–6 Q&As tailored to the combo; emitted as `FAQPage` JSON-LD.
-8. **Final CTA band** — repeats `Schedule a call`.
+| # | Section | Fixed chrome | Variable slots |
+|---|---|---|---|
+| 0 | **Nav** | Real `Navbar.tsx`: hamburger + "MENU" left, **centered `zyra-logo.webp` image**, empty right spacer. **No links, no CTA.** | — |
+| 1 | **Hero** (88vh, 2-col) | Home-hero media treatment; grain; overlay gradient; 180px bottom fade; gold CTA; glass answer card; scroll indicator | `{{eyebrow}}` `{{h1}}` `{{subline}}` `{{trust_line}}` `{{aeo_answer}}` `{{proof_strip[]}}` |
+| 2 | **Client strip** | Layout, hairlines, label | `{{client_strip[]}}` (derived from proof) |
+| 3 | **Problem** (cream) | Curve divider; ghost numeral; 2-col | `{{problem_heading}}` `{{problem_stat}}` `{{problem_body[]}}` ×3 |
+| 4 | **What we deliver** (cream, continuous) | "Everything / included." heading; divide-y list; ghost number column | `{{deliverables[]}}` |
+| 5 | **Proof** (dark) | Curve divider; contact-sheet layout; badges; ghost indices; **honesty disclaimer** | `{{proof[]}}` |
+| 6 | **Process** | Sticky left column; ghost numbers | `{{process[]}}` |
+| 7 | **FAQ** | Accordion; `FAQPage` JSON-LD | `{{faq[]}}` (4–6) |
+| 8 | **Final CTA** (cream) | Curve divider; "Let's make something / impossible."; gold pill + email | — |
+| — | **Sticky CTA bar** | Slides in after hero; gold pill | context string |
 
-## Grounding & honesty rules
+**Shape:** 88vh cinematic hero split two columns (copy + gold CTA left, glass
+"short answer" card with 3 real thumbnails right) → client strip → one continuous
+cream stretch (Problem + Deliverables) → dark contact-sheet proof → process →
+FAQ → cream final CTA.
+
+**Head slots** (not `{{}}`-marked in the mockup): `slug` · `meta_title` ·
+`meta_description` · `canonical` · `schema_jsonld` (Service + FAQPage +
+BreadcrumbList; `areaServed` only when geography is set).
+
+**Why Option E won:** it is the only layout where the AEO answer, real
+case-study proof, and the CTA are **all above the fold together** — serving the
+AI answer engine and the skeptical human at once — while the home-page hero still
+does the emotional work in the first three seconds. Runner-up was Option C
+(service-led): cheaper to ship (reuses `ServicePageTemplate` near-verbatim) but
+buries the answer. Fall back to C only if speed to ship beats AEO.
+
+## CTA rule (LOCKED)
+
+Exactly **3 CTAs per page**: hero, sticky bar, final band. **None in the nav.**
+- Label default: `Schedule a Call` → `https://calendly.com/marketersatzyra/30min`
+- Each fires its own GA4 `lead_*` event (the site-wide GA4 lead tracking is
+  already live — reuse those event names, don't invent new ones).
+
+## Grounding & honesty rules (non-negotiable — generator must enforce)
 
 - LLM receives Zyra's real context + the resolved service/case-study data and is
   instructed to never invent clients, numbers, or claims.
-- **Case-study proof uses real fields only.** The site's `work-data.ts` has **no
-  metrics** — so no "3× ROI"/view-count style numbers may appear. Verified in the
-  source during design.
+- **1. No fabricated metrics.** `work-data.ts` carries **no results**. Proof =
+  client, title, category, year, tags, brief, thumbnail, `/work/[slug]` link.
+  Nothing else. Verified in source.
+- **2. Never state Zyra's own price.** Not in copy, not in the trust line, and
+  **not in the `FAQPage` JSON-LD** — schema leaks to Google and AI answer engines
+  even when invisible on the page. *This was a real near-miss caught in the
+  mockups.* The `₹30–80L` **industry** figure is fine; it's the contrast the pitch
+  rests on. (See the standing pricing rule.)
+- **3. The proof disclaimer is fixed chrome and cannot be removed:**
+  > Selected from Zyra's full body of work. Not all projects shown are fintech or
+  > Bengaluru-based — each links to its full case study.
+
+  *(Industry/geo words in that line are slot-filled per combo.)* Any combo can
+  select case studies that don't match its own H1 — e.g. Fintech × Bengaluru,
+  where only Goodscore is fintech and none are Bengaluru projects. Without this
+  line the page implies client relationships and geographies that do not exist.
+  **Proof honesty is structural here, not cosmetic.**
+- **4. Never label proof by the page's own industry/geo** (e.g. "Our Fintech
+  clients in Bengaluru"). Use **"Selected work"**.
 - Anything ungroundable becomes a visible `[source needed]` tag.
 - **Publish is blocked** (server-side, reusing the existing guard) if any
-  `[source needed]` / `REPLACE-ME` / `TODO` / `lorem ipsum` remains.
+  `[source needed]` / `REPLACE-ME` / `TODO` / `lorem ipsum` remains. **Extend the
+  guard to reject any page whose copy or JSON-LD contains Zyra's own price.**
 
 ## SEO / AEO layer (§6)
 
@@ -197,6 +272,26 @@ Per generated page:
 - No `Date.now()`/random in library code — the caller supplies any nonce, matching
   the existing publisher contract.
 
+## Design-system truths (verified — do NOT trust `globals.css`)
+
+Found during the template session and **independently verified in source**:
+
+- **`globals.css` is STALE.** It declares `--color-gold: #FFFFFF` and strict
+  monochrome, but the live site ships a **gold `#C9A96E`** hero CTA
+  (`src/components/home/HeroSection.tsx:128`, `src/components/work/LogoTicker.tsx:38`)
+  and `ServicePageTemplate` alternates black with **cream `#F5F4F0`** panels via
+  SVG curve dividers. **The components are the truth, not the CSS file.**
+  Approved: gold CTA + cream panels. *(Fixing the variable in the site repo is
+  out of scope here — tracked as a follow-up.)*
+- **Nav is NOT wordmark + links + CTA.** The real `Navbar.tsx` is hamburger +
+  "MENU" left, a **centered `zyra-logo.webp` image**, and an empty right spacer.
+  No links, no CTA in the nav.
+- **`work-data.ts` has 22 projects, not 24.** *(This spec previously said 24 in
+  two places — corrected. The original miscount came from a grep that also
+  matched the `slug: string` interface line and the `getProjectBySlug` signature.)*
+- **Mixed aspect ratios are structural.** Brand Films are 16:9; Micro Drama /
+  Social / Ad Creative are 9:16. Option E crops via `object-fit: cover`.
+
 ## Site-repo rendering (§8)
 
 On `~/Documents/GitHub/ZyraUpdated` (thezyra.in), added **once** as a scaffold
@@ -204,9 +299,13 @@ On `~/Documents/GitHub/ZyraUpdated` (thezyra.in), added **once** as a scaffold
 
 - `src/lib/lp-data.ts` — `SolutionPage[]` + `getSolutionBySlug()`, mirroring the
   `blog-data.ts` / `work-data.ts` pattern.
-- `src/app/solutions/[slug]/page.tsx` — renders the 8 sections in the existing
-  design system, with `generateStaticParams`, `generateMetadata` (title, desc,
-  canonical, OG), and the JSON-LD script tags.
+- `src/app/solutions/[slug]/page.tsx` — renders the **locked Option E — Hybrid**
+  layout (see the skeleton table above; `option-e-hybrid.html` is the visual
+  source of truth), with `generateStaticParams`, `generateMetadata` (title, desc,
+  canonical, OG), and the JSON-LD script tags. Recomposes existing components
+  (`ServicePageTemplate`, `FAQ`, `ProcessSteps`, `SectionHeader`, home
+  `HeroSection` treatment, `LogoTicker`, `LazyVideo`/`LazyCFIframe`) rather than
+  redesigning.
 
 ## Publish flow (§9)
 
@@ -226,7 +325,7 @@ interface SolutionInputs {
   geography: string;           // "" allowed if industry set
   serviceSlugs: string[];      // 0..N of the 5 services (optional)
   caseStudySlugs: string[];    // 1..N (required)
-  cta: string;                 // default "Schedule a call"
+  cta: string;                 // default "Schedule a Call"
 }
 
 type SolutionSectionType =
@@ -298,5 +397,19 @@ interface SolutionPage {
 
 1. **Site scaffold as a first PR** — `lp-data.ts` + `solutions/[slug]/page.tsx`
    must exist before any append PR. Planned as the first publish action.
-2. **Proof without metrics** — confirmed: proof uses client + brief + category +
-   tags + link only; no invented numbers.
+2. ~~Proof without metrics~~ — **RESOLVED**: proof uses client + brief +
+   category + tags + thumbnail + link only; no invented numbers. Now a
+   non-negotiable rule above.
+3. ~~Template/layout~~ — **RESOLVED**: Option E — Hybrid, locked.
+   `option-e-hybrid.html` is the visual source of truth.
+4. ~~Edge cases (no service / 5+ case studies)~~ — **RESOLVED**, see above.
+
+## Follow-ups (out of scope here — site repo, non-blocking)
+
+- `--color-gold: #FFFFFF` in `globals.css` contradicts the shipped gold
+  `#C9A96E` CTA. Worth fixing the variable so future work stops inheriting the
+  stale value. Does not block this feature (we match the components).
+- Stale "verified ₹60k" reference at
+  `docs/superpowers/specs/2026-07-14-topic-synthesis-design.md:37` — inert
+  documentation; the live writer grounding never carried the price. Should be
+  scrubbed so no future session treats it as a fact to state.
