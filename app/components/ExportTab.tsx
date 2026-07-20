@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import type { Exports, Brief, Inputs, HeroImage, Audit } from '@/lib/types';
 import { CopyBlock } from './ui';
+import { toDoc, DOC_MIME } from '@/lib/export/doc';
 
 function download(name: string, content: string, type = 'text/plain') {
   const blob = new Blob([content], { type });
@@ -18,6 +19,16 @@ export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports
   const [publishing, setPublishing] = useState(false);
   const [prUrl, setPrUrl] = useState('');
   const [pubErr, setPubErr] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Markdown, not HTML: it pastes into Slack, email, Docs and Notion as readable
+  // prose, where raw tags would arrive as noise.
+  async function copyForReview() {
+    if (!exports) return;
+    await navigator.clipboard.writeText(exports.markdown);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
 
   if (!exports) return <div className="empty">Generate a draft to export CMS-ready assets.</div>;
 
@@ -108,6 +119,21 @@ export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports
             <a href={prUrl} target="_blank" rel="noreferrer">{prUrl}</a>
           </div>
         )}
+      </div>
+
+      {/* Sending the draft to a human to read and approve is a different job from
+          shipping it to the CMS, so it gets its own row above the developer formats. */}
+      <div className="btn-row" style={{ marginTop: 0, marginBottom: 12 }}>
+        <button
+          className="btn small"
+          title="Opens in Word, Google Docs or Pages"
+          onClick={() => download(`${blogPost.slug}.doc`, toDoc(exports.html, brief?.recommendedTitle ?? blogPost.slug), DOC_MIME)}
+        >
+          Download for review (.doc)
+        </button>
+        <button className="btn secondary small" onClick={copyForReview}>
+          {copied ? 'Copied ✓' : 'Copy draft text'}
+        </button>
       </div>
 
       <div className="btn-row" style={{ marginTop: 0, marginBottom: 12 }}>
