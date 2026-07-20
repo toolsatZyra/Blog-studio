@@ -24,6 +24,10 @@ export function briefGenerator(
     .filter((q) => src.includes(q.source)).map((q) => q.text.trim()).filter(clean);
   const questionPool = [...pick(['paa']), ...pick(['reddit', 'x'])];
   const headings = uniqueTop(questionPool, 5);
+  // What the outline did not consume. The FAQ draws from here so it asks
+  // something new rather than restating the article's own section headings.
+  const usedAsHeading = new Set(headings.map(normKey));
+  const faqPool = questionPool.filter((q) => !usedAsHeading.has(normKey(q)));
   const perSection = Math.max(120, Math.round((inputs.wordCount - 200) / (headings.length + 1)));
 
   const outline: BriefSection[] = headings.map((h) => ({
@@ -61,7 +65,12 @@ export function briefGenerator(
       'A named third-party study on AI video / content marketing',
       'A primary statistic from a credible publication (never invent, mark [source needed])',
     ],
-    faq: uniqueTop(questionPool, 4).map((q) => ({
+    // Drawn from the questions the OUTLINE did not take. Both used to come from
+    // the top of the same pool, so every FAQ candidate was already an H2 - and
+    // since the writer is told to skip questions the article already answers, it
+    // correctly dropped all of them and produced no FAQ at all. Losing the FAQ
+    // also loses the FAQPage JSON-LD.
+    faq: uniqueTop(faqPool, 4).map((q) => ({
       q: ensureQuestion(q),
       a: `Concise 40-60 word answer to "${stripQ(q)}". Factual, specific, no fabricated numbers.`,
     })),
@@ -110,10 +119,16 @@ function angleFor(inputs: Inputs, service?: string | null): string {
 function ensureQuestion(s: string): string { return /\?$/.test(s) ? s : titleCase(s) + '?'; }
 function stripQ(s: string): string { return s.replace(/\?+$/, '').trim(); }
 
+/** Comparison key for "is this the same question?" - shared by uniqueTop and the
+ *  outline/FAQ split so the two can never disagree about what counts as a dupe. */
+function normKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function uniqueTop(list: string[], n: number): string[] {
   const seen = new Set<string>(); const out: string[] = [];
   for (const s of list) {
-    const k = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const k = normKey(s);
     if (seen.has(k)) continue; seen.add(k); out.push(s);
     if (out.length >= n) break;
   }

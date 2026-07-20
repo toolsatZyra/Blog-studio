@@ -38,7 +38,7 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
   return finalize(buildMockBlocks(inputs, brief), 'mock');
 }
 
-function buildPrompt(inputs: Inputs, brief: Brief): string {
+export function buildPrompt(inputs: Inputs, brief: Brief): string {
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const outline = brief.outline.map((sec) => `  - ${sec.heading}  (~${sec.targetWords} words)`).join('\n');
   const faq = brief.faq.map((f) => f.q).join(' | ');
@@ -58,9 +58,14 @@ function buildPrompt(inputs: Inputs, brief: Brief): string {
     // Ask for the exact shape the parser reads. The parser tolerates other
     // phrasings (see isFaqHeading), but a heading it cannot read costs the
     // FAQPage JSON-LD silently, so the prompt should not leave it to chance.
+    // Always ask for one. When research turned up no spare questions the brief
+    // has no candidates, and the old "none required" line meant the article
+    // simply shipped without an FAQ - and without the FAQPage JSON-LD. The
+    // writer has live web search, so it can source real questions itself.
+    `- FAQ: REQUIRED. End the article with an H2 heading exactly "## FAQ", then each question as an H3 (###) followed by its answer paragraph. Write 3 to 5, none of them restating a section above.`,
     brief.faq.length
-      ? `- FAQ: end the article with an H2 heading exactly "## FAQ", then each question as an H3 (###) followed by its answer paragraph. Pick from these candidates, keeping only those that add value and are not already answered above: ${faq}`
-      : `- FAQ: none required for this article.`,
+      ? `  Start from these researched candidates, dropping any the article already answers: ${faq}`
+      : `  Research turned up no spare questions, so source your own from the reading you did: what would this reader still ask after finishing the article?`,
     ``,
     `VERIFIED ZYRA FACTS (the ONLY Zyra numbers/claims you may state as fact): ${ZYRA_PROOF_POINTS.join('; ')}`,
     `ZYRA CONTEXT (positioning and services, not dated first-hand production notes):\n${inputs.zyraContext.trim()}`,
