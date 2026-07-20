@@ -238,7 +238,7 @@ export default function Home() {
           />
         )}
         {tab === 'checklist' && <ChecklistTab audit={audit} />}
-        {tab === 'export' && <ExportTab exports={exportsData} brief={brief} inputs={inputs} audit={audit} />}
+        {tab === 'export' && <ExportTab exports={exportsData} brief={brief} inputs={inputs} audit={audit} draft={draft} />}
       </main>
     </div>
   );

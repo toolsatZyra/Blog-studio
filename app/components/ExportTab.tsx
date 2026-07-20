@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import type { Exports, Brief, Inputs, HeroImage, Audit } from '@/lib/types';
+import type { Exports, Brief, Inputs, HeroImage, Audit, Draft } from '@/lib/types';
 import { CopyBlock } from './ui';
-import { toDoc, DOC_MIME } from '@/lib/export/doc';
+import { buildReviewDocx, DOCX_MIME } from '@/lib/export/docx';
 
 function download(name: string, content: string, type = 'text/plain') {
   const blob = new Blob([content], { type });
@@ -12,7 +12,7 @@ function download(name: string, content: string, type = 'text/plain') {
   URL.revokeObjectURL(url);
 }
 
-export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports; brief?: Brief; inputs?: Inputs; audit?: Audit }) {
+export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: Exports; brief?: Brief; inputs?: Inputs; audit?: Audit; draft?: Draft }) {
   const [hero, setHero] = useState<HeroImage>();
   const [imgLoading, setImgLoading] = useState(false);
   const [imgErr, setImgErr] = useState('');
@@ -20,6 +20,7 @@ export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports
   const [prUrl, setPrUrl] = useState('');
   const [pubErr, setPubErr] = useState('');
   const [copied, setCopied] = useState(false);
+  const [docxBusy, setDocxBusy] = useState(false);
 
   // Markdown, not HTML: it pastes into Slack, email, Docs and Notion as readable
   // prose, where raw tags would arrive as noise.
@@ -28,6 +29,25 @@ export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports
     await navigator.clipboard.writeText(exports.markdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
+  }
+
+  // The docx library is the only non-framework dependency here, so it is
+  // imported inside buildReviewDocx and fetched on click rather than shipped in
+  // the main bundle.
+  async function downloadDocx() {
+    if (!draft || !exports) return;
+    setDocxBusy(true);
+    try {
+      const bytes = await buildReviewDocx(draft, brief?.recommendedTitle ?? draft.title);
+      const url = URL.createObjectURL(new Blob([bytes], { type: DOCX_MIME }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${exports.blogPost.slug}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDocxBusy(false);
+    }
   }
 
   if (!exports) return <div className="empty">Generate a draft to export CMS-ready assets.</div>;
@@ -126,10 +146,11 @@ export function ExportTab({ exports, brief, inputs, audit }: { exports?: Exports
       <div className="btn-row" style={{ marginTop: 0, marginBottom: 12 }}>
         <button
           className="btn small"
-          title="Opens in Word, Google Docs or Pages"
-          onClick={() => download(`${blogPost.slug}.doc`, toDoc(exports.html, brief?.recommendedTitle ?? blogPost.slug), DOC_MIME)}
+          title="A real Word document - opens in Word, Google Docs or Pages"
+          disabled={!draft || docxBusy}
+          onClick={downloadDocx}
         >
-          Download for review (.doc)
+          {docxBusy ? 'Building...' : 'Download for review (.docx)'}
         </button>
         <button className="btn secondary small" onClick={copyForReview}>
           {copied ? 'Copied ✓' : 'Copy draft text'}
