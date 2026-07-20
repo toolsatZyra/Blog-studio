@@ -66,10 +66,33 @@ export function uniqueRatio(draft: Draft): number {
   return new Set(words).size / words.length;
 }
 
+const PLACEHOLDER_PATTERNS = [/\[source needed\]/gi, /REPLACE-ME/gi, /\bTODO\b/g, /\blorem ipsum\b/gi, /\{\{[^}]*\}\}/g];
+
 /** Unresolved internal placeholders that must never ship. */
 export function findPlaceholders(text: string): string[] {
-  const pats = [/\[source needed\]/gi, /REPLACE-ME/gi, /\bTODO\b/g, /\blorem ipsum\b/gi, /\{\{[^}]*\}\}/g];
   const hits: string[] = [];
-  for (const re of pats) { const m = text.match(re); if (m) hits.push(...m); }
+  for (const re of PLACEHOLDER_PATTERNS) { const m = text.match(re); if (m) hits.push(...m); }
   return [...new Set(hits.map((h) => h.trim()))];
+}
+
+/**
+ * The same placeholders, each with the words around it.
+ *
+ * Knowing a [source needed] exists is not actionable; finding it in a 1,400-word
+ * draft is the actual work. On a topic like production cost the writer tags a
+ * figure it could not verify on nearly every generation, so this is a recurring
+ * hunt, not a one-off.
+ */
+export function findPlaceholderContexts(text: string, window = 70): { placeholder: string; context: string }[] {
+  const out: { placeholder: string; context: string }[] = [];
+  for (const re of PLACEHOLDER_PATTERNS) {
+    for (const m of text.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))) {
+      const at = m.index ?? 0;
+      const start = Math.max(0, at - window);
+      const end = Math.min(text.length, at + m[0].length + window);
+      const context = `${start > 0 ? '...' : ''}${text.slice(start, end).trim()}${end < text.length ? '...' : ''}`;
+      out.push({ placeholder: m[0].trim(), context });
+    }
+  }
+  return out;
 }

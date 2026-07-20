@@ -1,7 +1,7 @@
 import type { Draft, Brief, ScoreCard } from '../types';
 import {
   buildCard, draftText, sentences, check,
-  duplicateParagraphCount, uniqueRatio, findPlaceholders,
+  duplicateParagraphCount, uniqueRatio, findPlaceholders, findPlaceholderContexts,
 } from './score';
 import { countWords } from '../util';
 
@@ -19,6 +19,7 @@ export function seoChecks(draft: Draft, brief: Brief): ScoreCard {
   const dupes = duplicateParagraphCount(draft);
   const uniq = uniqueRatio(draft);
   const placeholders = findPlaceholders(text);
+  const placeholderHits = findPlaceholderContexts(text);
   const exactKwHits = (lower.match(new RegExp(`\\b${escapeRe(kw)}\\b`, 'g')) ?? []).length;
   const avgSentence = sentences(draft).reduce((s, x) => s + countWords(x), 0) / Math.max(1, sentences(draft).length);
 
@@ -61,7 +62,11 @@ export function seoChecks(draft: Draft, brief: Brief): ScoreCard {
       dupes === 0 ? 'All paragraphs are distinct.' : `${dupes} near-duplicate paragraph(s) — scaled-content abuse risk; rewrite each section uniquely.`),
     check('no-placeholders', 'No unresolved placeholders',
       placeholders.length === 0 ? 'pass' : 'fail',
-      placeholders.length === 0 ? 'Clean.' : `Internal placeholders left in body: ${placeholders.slice(0, 3).join(', ')} — resolve before publishing.`),
+      placeholders.length === 0
+        ? 'Clean.'
+        // Quote the surrounding sentence: naming the tag without locating it
+        // leaves the operator hunting through a 1,400-word draft by eye.
+        : `${placeholderHits.length} unresolved placeholder(s). Find and fix: ${placeholderHits.slice(0, 3).map((h) => `"${h.context}"`).join(' — also: ')}`),
     check('unique-content', 'Enough unique content (not thin/repetitive)',
       uniq >= 0.4 && total >= 600 ? 'pass' : uniq >= 0.3 ? 'warn' : 'fail',
       `Unique-word ratio ${(uniq * 100).toFixed(0)}%, ${total} words.`),
