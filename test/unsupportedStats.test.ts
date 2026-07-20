@@ -55,3 +55,20 @@ test('an unsourced figure elsewhere is still caught when another is sourced', ()
   ]);
   assert.deepEqual(findUnsupportedStats(d), ['70%']);
 });
+
+// The per-article prompt promises the writer two ways to state a statistic.
+// If the guard stops accepting either, the prompt is lying and every stat-heavy
+// article silently becomes unpublishable. Pin the contract.
+test('both citation forms the prompt promises actually satisfy the guard', () => {
+  const accordingTo = draft([{ type: 'p', text: 'According to McKinsey, 70% of projects stall.' }]);
+  assert.deepEqual(findUnsupportedStats(accordingTo), [], '"According to X" must publish');
+
+  const markdownLink = draft([{
+    type: 'p',
+    text: 'Some 70% of projects stall ([McKinsey](https://www.mckinsey.com/report)).',
+  }]);
+  assert.deepEqual(findUnsupportedStats(markdownLink), [], 'an inline source link must publish');
+
+  const plainLanguage = draft([{ type: 'p', text: 'Most projects stall before launch.' }]);
+  assert.deepEqual(findUnsupportedStats(plainLanguage), [], 'dropping the number must publish');
+});

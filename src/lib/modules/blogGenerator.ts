@@ -69,6 +69,18 @@ function buildPrompt(inputs: Inputs, brief: Brief): string {
     `MARKET ADAPTATION:\n${marketGuidance(inputs.audience.geographies).promptBlock}`,
     ``,
     `RESEARCH: Live web search IS available to you. Follow the FRESHNESS GATE and MANDATORY RESEARCH PROTOCOL in your instructions: research current evidence silently before writing, and do not rely on memory for any volatile tool, ranking, pricing, access, language-quality, or legal claim.`,
+    ``,
+    // Stated in the guard's own terms. The auditor accepts a percentage or
+    // multiplier only when its SENTENCE carries "according to", "Source:", or a
+    // link - so a vaguer instruction to "cite volatile facts" leaves the writer
+    // producing bare figures that are then blocked at publish, and the operator
+    // resolving them by hand on every stat-heavy article.
+    `STATISTICS - THIS IS A PUBLISH GATE, NOT A STYLE NOTE:`,
+    `Every percentage ("70%") and every multiplier ("3.2x") is refused at publish unless the SAME SENTENCE names its source. Two acceptable forms:`,
+    `  - "According to <publication>, 70% of ..." (name the actual publication)`,
+    `  - "... 70% of projects stall ([Publication Name](https://real-url))" - a real URL you actually found in research, never invented`,
+    `If you cannot source a figure, do not write the figure. Write the plain-language claim instead: "most projects stall", "several times faster". A sourced sentence and an unnumbered sentence both publish; a bare number does not.`,
+    `This does not apply to a named concept such as "the 30% rule", to Zyra's verified facts above, or to prices, counts and durations.`,
   ].join('\n');
 }
 
