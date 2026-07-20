@@ -50,8 +50,18 @@ export function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+/**
+ * A word that already carries a capital past its first letter was cased on
+ * purpose: iPhone, eBay, YouTube, McKinsey, LinkedIn. Uppercasing its first
+ * character produces "IPhone", which reads as careless to the exact reader these
+ * articles are written for.
+ */
+function isDeliberatelyCased(word: string): boolean {
+  return /[A-Z]/.test(word.slice(1));
+}
+
 export function titleCase(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+  return s.replace(/[\w']+/g, (w) => (isDeliberatelyCased(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)));
 }
 
 const ACRONYMS: Record<string, string> = {
@@ -67,6 +77,7 @@ export function smartTitle(s: string): string {
     .map((w, i) => {
       const lower = w.toLowerCase();
       if (ACRONYMS[lower]) return ACRONYMS[lower];
+      if (isDeliberatelyCased(w)) return w;
       if (i !== 0 && SMALL_WORDS.has(lower)) return lower;
       return w.charAt(0).toUpperCase() + w.slice(1);
     })

@@ -27,15 +27,15 @@ export async function blogGenerator(inputs: Inputs, brief: Brief): Promise<Draft
       if (/^RESEARCH_REQUIRED/i.test(out) || out.length < 300) {
         throw new Error(out ? out.slice(0, 200) : 'Claude returned an empty response.');
       }
-      return finalize(parseMarkdown(md), 'live');
+      return finalize(parseMarkdown(md), 'live', brief.recommendedTitle);
     } catch (e) {
       // Surface the failure instead of silently pretending it worked.
-      const draft = finalize(buildMockBlocks(inputs, brief), 'mock');
+      const draft = finalize(buildMockBlocks(inputs, brief), 'mock', brief.recommendedTitle);
       draft.warnings = [`Live writer (Claude) failed — showing mock draft instead. ${(e as Error).message}`];
       return draft;
     }
   }
-  return finalize(buildMockBlocks(inputs, brief), 'mock');
+  return finalize(buildMockBlocks(inputs, brief), 'mock', brief.recommendedTitle);
 }
 
 export function buildPrompt(inputs: Inputs, brief: Brief): string {
@@ -319,12 +319,26 @@ export function splitFaqSection(blocks: DraftBlock[]): { body: DraftBlock[]; faq
   return { body, faq };
 }
 
-function finalize(blocks: DraftBlock[], mode: 'mock' | 'live'): Draft {
-  const { body, faq } = splitFaqSection(blocks);
+/**
+ * Every exporter emits brief.recommendedTitle as the H1 and then renders each
+ * block, so a leading H2 that repeats the title ships as an H1 followed by an
+ * identical H2. The system prompt says not to repeat the title; the writer does
+ * it anyway often enough to matter, and a prompt is not a guarantee.
+ *
+ * Only the FIRST block is considered, and only on an exact match after
+ * normalising: a section legitimately named close to the title stays, and a
+ * later H2 that happens to echo it is untouched.
+ */
+export function finalize(blocks: DraftBlock[], mode: 'mock' | 'live', title?: string): Draft {
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const deduped = title && blocks[0]?.type === 'h2' && key(blocks[0].text ?? '') === key(title)
+    ? blocks.slice(1)
+    : blocks;
+  const { body, faq } = splitFaqSection(deduped);
   const text = body.map((b) => b.text ?? (b.items ?? []).join(' ')).join(' ');
-  const title = body.find((b) => b.type === 'h2')?.text ?? '';
+  const draftTitle = title || body.find((b) => b.type === 'h2')?.text || '';
   return {
-    title,
+    title: draftTitle,
     blocks: body,
     faq,
     wordCount: countWords(text),
