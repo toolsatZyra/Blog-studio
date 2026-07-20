@@ -50,13 +50,17 @@ export const ZYRA_SERVICES: ZyraService[] = [
 // solutionsData.ts, which is generated from service-data.ts). A test pins the
 // agreement so the two cannot drift apart again.
 //
-// REMOVED 2026-07-20: "50M+ views". It came from the /work page line
-// "1,000+ creatives. 5 formats. 50 million views." which is stale - social
-// content alone is now 60M+. Holding both let one post claim 50M and the next
-// 60M, and both looked sourced. (The other two numbers on that /work line are
-// kept but come from the same stale sentence, so they are worth re-checking.)
+// REMOVED 2026-07-20, both from the stale /work line
+// "1,000+ creatives. 5 formats. 50 million views.":
+//   - "50M+ views": superseded. Social content alone is 60M+, so a studio-wide
+//     50M could not be right. Holding both let one post claim 50M and the next
+//     60M, and both looked sourced.
+//   - "1,000+ creatives": unverifiable and self-contradicting. No count of
+//     "creatives" exists anywhere on the site, and it understates the 2,000+ ads
+//     the site does claim. Dropped rather than guessed at; the scoped numbers
+//     below say more and can be defended.
+// "5 formats" was checked and kept: the site has exactly 5 services.
 export const ZYRA_PROOF_POINTS: string[] = [
-  '1,000+ creatives delivered across all formats',
   '5 production formats',
   '50+ brand films & ads created',
   '2,000+ ads created for performance campaigns',
