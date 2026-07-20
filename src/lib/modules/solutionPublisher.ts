@@ -88,13 +88,21 @@ export function serializeSolutionPage(page: SolutionPage): string {
 
 /** Insert the literal as the first element of ALL_SOLUTIONS (newest first). */
 export function insertIntoLpData(fileContent: string, literal: string): string {
-  const re = /(export const ALL_SOLUTIONS:\s*SolutionPage\[\]\s*=\s*\[)/;
-  if (!re.test(fileContent)) {
+  const open = /(export const ALL_SOLUTIONS:\s*SolutionPage\[\]\s*=\s*\[)/;
+  if (!open.test(fileContent)) {
     throw new Error(
       'Could not find the ALL_SOLUTIONS array in lp-data.ts. Does the site have the /solutions route yet?',
     );
   }
-  return fileContent.replace(re, `$1\n${literal}`);
+
+  // An empty array is written `= []`, so its brackets share a line. Inserting
+  // after the `[` welded the new entry to the closing one as `},]` - valid, but
+  // it shows up in the PR diff of the first publish after the array is emptied
+  // and reads as a mistake. Close it on its own line instead.
+  const empty = /(export const ALL_SOLUTIONS:\s*SolutionPage\[\]\s*=\s*\[)(\s*)(\])/;
+  if (empty.test(fileContent)) return fileContent.replace(empty, `$1\n${literal}\n$3`);
+
+  return fileContent.replace(open, `$1\n${literal}`);
 }
 
 /** Every slug already published, so a new page can never silently overwrite one. */

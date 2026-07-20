@@ -112,3 +112,34 @@ test('the serialized literal round-trips through an insert without corrupting th
   const close = (out.match(/[}\]]/g) || []).length;
   assert.equal(open, close, 'unbalanced braces would break the site build');
 });
+
+// The very first publish after the array is emptied inserts into `= []`, where
+// the closing bracket sits on the same line as the opening one. Inserting after
+// the `[` left it welded to the new entry as `},]` - valid, but it lands in
+// every PR diff and reads as a mistake.
+const EMPTY_FIXTURE = `import type { SolutionPage } from './solutions/types'
+
+export const ALL_SOLUTIONS: SolutionPage[] = []
+
+export function getSolutionBySlug(slug: string): SolutionPage | undefined {
+  return ALL_SOLUTIONS.find((p) => p.slug === slug)
+}
+`;
+
+test('inserting into an empty array keeps the closing bracket on its own line', () => {
+  const out = insertIntoLpData(EMPTY_FIXTURE, serializeSolutionPage(page));
+  assert.ok(!out.includes('},]'), 'the entry must not be welded to the closing bracket');
+  const lines = out.split('\n');
+  assert.ok(lines.some((l) => l === ']'), 'the array must close on a line of its own');
+});
+
+test('inserting into an empty array still produces a findable slug', () => {
+  const out = insertIntoLpData(EMPTY_FIXTURE, serializeSolutionPage(page));
+  assert.deepEqual(existingSlugs(out), ['fintech/bengaluru']);
+});
+
+test('inserting into a populated array is unchanged', () => {
+  const out = insertIntoLpData(FIXTURE, serializeSolutionPage(page));
+  assert.deepEqual(existingSlugs(out), ['fintech/bengaluru', 'existing-page'], 'newest first');
+  assert.ok(!out.includes('},]'));
+});
