@@ -42,14 +42,28 @@ export const ZYRA_SERVICES: ZyraService[] = [
 ];
 
 /** Site-verified proof points — the ONLY numbers the writer may state. */
+// Each carries WHAT IT COVERS, because a bare number gets restated as a
+// studio-wide claim. "60M+ views" is social content alone; micro drama's 10M+ is
+// a separate figure, and a post that merged them would be overstating.
+//
+// Verified against the site's own per-service stats (mirrored in
+// solutionsData.ts, which is generated from service-data.ts). A test pins the
+// agreement so the two cannot drift apart again.
+//
+// REMOVED 2026-07-20: "50M+ views". It came from the /work page line
+// "1,000+ creatives. 5 formats. 50 million views." which is stale - social
+// content alone is now 60M+. Holding both let one post claim 50M and the next
+// 60M, and both looked sourced. (The other two numbers on that /work line are
+// kept but come from the same stale sentence, so they are worth re-checking.)
 export const ZYRA_PROOF_POINTS: string[] = [
-  '1,000+ creatives',
-  '5 formats',
-  '50M+ views',
+  '1,000+ creatives delivered across all formats',
+  '5 production formats',
   '50+ brand films & ads created',
-  '2,000+ ads created',
+  '2,000+ ads created for performance campaigns',
   '$10M ad spend managed',
-  '60M+ social views',
+  '60M+ views generated on social content',
+  '10M+ views generated on micro drama',
+  '10+ episodes and 200hr+ of content produced for OTT',
 ];
 
 /** Entities the GEO auditor checks the draft covers. */
