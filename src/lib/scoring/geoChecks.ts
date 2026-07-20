@@ -25,7 +25,7 @@ export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): S
   const hasQuote = draft.blocks.some((b) => b.type === 'blockquote');
 
   // Unsupported-stats check: numbers that aren't Zyra proof points and have no nearby source.
-  const unsupported = findUnsupportedStats(text);
+  const unsupported = findUnsupportedStats(draft);
   const wrongCurrency = currencyMismatch(text, markets);
 
   return buildCard([
@@ -62,20 +62,43 @@ export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): S
 
 const PROOF_NUMBERS = ['1,000', '1000', '50m', '50 m', '2,000', '2000', '$10m', '$10 m', '60m', '60 m'];
 
-// Flags only genuinely fabrication-prone figures: percentages ("73% of CMOs")
-// and multipliers ("3.2x"). Prices, currency amounts, counts, and durations are
-// legitimate (a brand quoting its own price is not a fabricated statistic) and
-// are never flagged here — the [source-needed] placeholder check covers the rest.
-function findUnsupportedStats(text: string): string[] {
+const CITED = /\[source needed\]|source:|according to|https?:\/\//i;
+/** "the 30% rule", "the 80/20 rule" — a named concept being discussed, not a
+ *  statistic being claimed. Asking for a citation on it is a category error. */
+const NAMED_RULE = /\d[\d,./]*\s?%?\s*rule\b/i;
+
+/**
+ * Flags only genuinely fabrication-prone figures: percentages ("73% of CMOs")
+ * and multipliers ("3.2x"). Prices, currency amounts, counts, and durations are
+ * legitimate (a brand quoting its own price is not a fabricated statistic) and
+ * are never flagged here — the [source-needed] placeholder check covers the rest.
+ *
+ * Scans PROSE ONLY, deliberately. A heading cannot carry a citation, so flagging
+ * a figure because it appears in one is unfixable except by rewriting the
+ * headline — and the old version did worse than that: it inspected only the
+ * FIRST sentence containing the figure, so when a heading mentioned it first,
+ * citing it properly in the body still would not clear the gate. Sourcing your
+ * work correctly and staying blocked is how a guard loses the operator's trust.
+ */
+export function findUnsupportedStats(draft: Draft): string[] {
+  const prose = draft.blocks
+    .filter((b) => b.type !== 'h2' && b.type !== 'h3')
+    .map((b) => b.text ?? (b.items ?? []).join('. ') ?? '')
+    .concat(draft.faq.map((f) => `${f.q} ${f.a}`))
+    .join(' ')
+    .replace(/\s+/g, ' ');
+
   const out: string[] = [];
   const re = /(\d[\d,]*\.?\d*\s?%)|(\d+(?:\.\d+)?\s?[x×]\b)/gi;
-  const matches = text.match(re) ?? [];
-  const sentencesArr = text.split(/(?<=[.!?])\s+/);
-  for (const m of matches) {
+  const sentencesArr = prose.split(/(?<=[.!?])\s+/);
+  for (const m of prose.match(re) ?? []) {
     const token = m.trim().toLowerCase().replace(/\s+/g, ' ');
     if (PROOF_NUMBERS.some((p) => token.includes(p))) continue;
-    const sent = sentencesArr.find((s) => s.toLowerCase().includes(token)) ?? '';
-    if (/\[source needed\]|source:|according to|https?:\/\//i.test(sent)) continue;
+    // EVERY sentence carrying the figure, not just the first: one good citation
+    // anywhere is enough to establish it.
+    const carrying = sentencesArr.filter((s) => s.toLowerCase().includes(token));
+    if (carrying.some((s) => CITED.test(s))) continue;
+    if (carrying.some((s) => NAMED_RULE.test(s))) continue;
     out.push(m.trim());
   }
   return [...new Set(out)];
