@@ -19,7 +19,19 @@ export function briefGenerator(
   // questions; only fall back to reddit/X titles that are short and not
   // promotional spam (raw social posts make terrible headings).
   const SPAM = /\$\s?\d|\/month|\bincome\b|subscribe|link in bio|in this video|prompts?\s+below|complete tutorial|https?:|free course|\bdm me\b|comment below|giveaway|👇|🔥/i;
-  const clean = (q: string) => q.length >= 12 && q.length <= 90 && !SPAM.test(q);
+  // People Also Ask for any craft term is dominated by consumer phone queries.
+  // "How do I turn off Cinematic mode on my iPhone" is a real, high-volume
+  // question - and answering it brings a reader who cannot buy a brand film. As
+  // an H2 it does worse than fail to convert: it redirects the article away from
+  // the buyer it was written for and dilutes the blog's topical signal.
+  const CONSUMER = new RegExp([
+    /\b(iphone|ipad|android|samsung|galaxy|gopro|smartphone)\b/,
+    /\bphone(?:'s)? camera\b|\bon my phone\b/,
+    /\b(turn|switch) (it )?(off|on)\b|\bdisable\b/,
+    /\bfree app\b|\bapp store\b|\bdownload the app\b/,
+  ].map((r) => r.source).join('|'), 'i');
+  const clean = (q: string) =>
+    q.length >= 12 && q.length <= 90 && !SPAM.test(q) && !CONSUMER.test(q);
   const pick = (src: string[]) => research.questions
     .filter((q) => src.includes(q.source)).map((q) => q.text.trim()).filter(clean);
   const questionPool = [...pick(['paa']), ...pick(['reddit', 'x'])];
