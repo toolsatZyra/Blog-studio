@@ -67,6 +67,12 @@ export function buildPrompt(inputs: Inputs, brief: Brief): string {
       ? `  Start from these researched candidates, dropping any the article already answers: ${faq}`
       : `  Research turned up no spare questions, so source your own from the reading you did: what would this reader still ask after finishing the article?`,
     ``,
+    // The brief computed these, the Brief tab showed them and the SEO auditor
+    // scored the article on having 3-5 of them - but nothing ever handed them to
+    // the writer, so it was marked down for omitting links it was never given.
+    `INTERNAL LINKS: work 3 to 5 of these into the body as natural in-sentence links, where the topic genuinely calls for it. Never a bare list, never a "related reading" block, never all of them.`,
+    ...brief.internalLinks.map((l) => `  - [${l.anchor}](${l.href})`),
+    ``,
     `VERIFIED ZYRA FACTS (the ONLY Zyra numbers/claims you may state as fact): ${ZYRA_PROOF_POINTS.join('; ')}`,
     `ZYRA CONTEXT (positioning and services, not dated first-hand production notes):\n${inputs.zyraContext.trim()}`,
     `ZYRA PRODUCTION NOTES: none supplied for this article. So do NOT present any specific first-hand shot, project, client, reroll count, cost, timeline, or result as something Zyra did. You may still state the VERIFIED ZYRA FACTS above and describe Zyra's services in general terms.`,

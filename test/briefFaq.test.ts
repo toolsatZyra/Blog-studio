@@ -89,3 +89,21 @@ test('a brief WITH candidates passes them to the writer', () => {
   assert.match(prompt, /FAQ: REQUIRED/);
   assert.match(prompt, /researched candidates/);
 });
+
+// The brief computes internal links, the Brief tab shows them, and the SEO
+// auditor scores whether the article has 3-5 of them. The prompt never passed
+// them, so the writer could not have used them if it wanted to.
+test('the writer is given the internal links it is scored on', () => {
+  const brief = briefGenerator(inputs, research([
+    q('What does an AI brand film cost?', 'paa'),
+    q('How long does AI production take?', 'paa'),
+  ]), selected);
+  assert.ok(brief.internalLinks.length >= 3, 'precondition: the brief has links');
+
+  const prompt = buildPrompt(inputs, brief);
+  for (const link of brief.internalLinks) {
+    assert.ok(prompt.includes(link.href), `href missing from the prompt: ${link.href}`);
+    assert.ok(prompt.includes(link.anchor), `anchor missing from the prompt: ${link.anchor}`);
+  }
+  assert.match(prompt, /INTERNAL LINKS/, 'they need a labelled section, not a buried mention');
+});
