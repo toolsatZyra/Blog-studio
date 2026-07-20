@@ -55,7 +55,12 @@ function buildPrompt(inputs: Inputs, brief: Brief): string {
     `- Conversion goal: weave in this CTA naturally, not salesy: "${inputs.cta}"`,
     `- Outline (H2 sections in order; open each with a direct answer, then expand to roughly the word budget; rewrite any awkward raw question into a clean, descriptive heading):`,
     outline,
-    `- FAQ candidates (include only those that add value and are not already covered): ${faq}`,
+    // Ask for the exact shape the parser reads. The parser tolerates other
+    // phrasings (see isFaqHeading), but a heading it cannot read costs the
+    // FAQPage JSON-LD silently, so the prompt should not leave it to chance.
+    brief.faq.length
+      ? `- FAQ: end the article with an H2 heading exactly "## FAQ", then each question as an H3 (###) followed by its answer paragraph. Pick from these candidates, keeping only those that add value and are not already answered above: ${faq}`
+      : `- FAQ: none required for this article.`,
     ``,
     `VERIFIED ZYRA FACTS (the ONLY Zyra numbers/claims you may state as fact): ${ZYRA_PROOF_POINTS.join('; ')}`,
     `ZYRA CONTEXT (positioning and services, not dated first-hand production notes):\n${inputs.zyraContext.trim()}`,
@@ -250,20 +255,55 @@ export function parseMarkdown(md: string): DraftBlock[] {
   return blocks;
 }
 
-function finalize(blocks: DraftBlock[], mode: 'mock' | 'live'): Draft {
-  // Split off an FAQ section (## FAQ ... ### Q / answer) into structured faq.
+/**
+ * Does this H2 open the FAQ section?
+ *
+ * The writer prompt asks for "## FAQ" but a model phrases headings its own way,
+ * and an unrecognised heading silently costs the FAQPage JSON-LD - the Q&A text
+ * stays in the body, so nothing looks broken until you notice the rich result
+ * never appears. Matching the bare substring "faq" missed the single most
+ * natural phrasing, "Frequently Asked Questions", which does not contain it.
+ *
+ * Deliberately NOT a loose /questions/ test: "The Questions Nobody Asks About
+ * Rerolls" is an article section, not an FAQ. A heading qualifies when it says
+ * FAQ, uses a known FAQ phrase, or *opens* with "Questions".
+ */
+export function isFaqHeading(text: string): boolean {
+  const s = text.trim();
+  return /\bfaqs?\b/i.test(s)
+    || /\bfrequently\s+asked\s+questions\b/i.test(s)
+    || /\bcommon\s+questions\b/i.test(s)
+    || /\bpeople\s+also\s+ask\b/i.test(s)
+    || /^questions\b/i.test(s);
+}
+
+/**
+ * Split a draft's blocks into body + structured FAQ.
+ *
+ * Exported so the heading-matching rules are testable on their own: this used to
+ * be inline in finalize(), where the only way to exercise it was a full generate.
+ */
+export function splitFaqSection(blocks: DraftBlock[]): { body: DraftBlock[]; faq: { q: string; a: string }[] } {
   const faq: { q: string; a: string }[] = [];
   let inFaq = false; let pendingQ = '';
   const body: DraftBlock[] = [];
   for (const b of blocks) {
-    if (b.type === 'h2' && /faq/i.test(b.text ?? '')) { inFaq = true; continue; }
+    if (b.type === 'h2' && isFaqHeading(b.text ?? '')) { inFaq = true; pendingQ = ''; continue; }
     if (inFaq) {
       if (b.type === 'h3') { pendingQ = b.text ?? ''; }
       else if (b.type === 'p' && pendingQ) { faq.push({ q: pendingQ, a: b.text ?? '' }); pendingQ = ''; }
+      // A second paragraph under the same question appends rather than being
+      // dropped on the floor, which is what the old `continue` did silently.
+      else if (b.type === 'p' && faq.length) { faq[faq.length - 1].a += ` ${b.text ?? ''}`.trimEnd(); }
       continue;
     }
     body.push(b);
   }
+  return { body, faq };
+}
+
+function finalize(blocks: DraftBlock[], mode: 'mock' | 'live'): Draft {
+  const { body, faq } = splitFaqSection(blocks);
   const text = body.map((b) => b.text ?? (b.items ?? []).join(' ')).join(' ');
   const title = body.find((b) => b.type === 'h2')?.text ?? '';
   return {
