@@ -1,10 +1,10 @@
 # Zyra Studio
 
-An internal tool that builds two things for [thezyra.in](https://www.thezyra.in). The first screen asks which:
+An internal tool that builds two things for [thezyra.studio](https://www.thezyra.studio). The first screen asks which:
 
 | | **Blog** → `/blog` | **Webpage** → `/webpage` |
 |---|---|---|
-| **Builds** | A blog post at `thezyra.in/blog/<slug>` | A programmatic SEO landing page at `thezyra.in/solutions/<industry>/<geography>` |
+| **Builds** | A blog post at `thezyra.studio/blog/<slug>` | A programmatic SEO landing page at `thezyra.studio/solutions/<industry>/<geography>` |
 | **Flow** | research → recommend → write → edit → audit → publish | industry × geography × service → generate → audit → publish |
 | **Inputs** | a topic/seed idea | industry and/or geography, optional services, ≥1 case study |
 | **Publishes by** | PR into `blog-data.ts` | PR into `lp-data.ts` |
@@ -82,7 +82,7 @@ Both flows persist to `localStorage` under **separate keys**, so they never dist
 
 If a live call fails, the UI shows a **warning banner** with the error and falls back to mock — it never silently pretends the key worked.
 
-## Publishing to thezyra.in
+## Publishing to thezyra.studio
 
 Both flows need `GITHUB_TOKEN`. Each one:
 
@@ -93,7 +93,7 @@ Both flows need `GITHUB_TOKEN`. Each one:
 
 **Neither commits to the default branch.** Defaults target `toolsatZyra/ZyraUpdated` (`master`); override with `PUBLISH_REPO` / `PUBLISH_BASE_BRANCH` / `PUBLISH_BLOG_DATA_PATH` / `PUBLISH_LP_DATA_PATH`. Verify the token end-to-end with `POST /api/publish-check`.
 
-> **Two destinations, don't conflate them:** this repo (the *studio*) deploys to **Vercel**; what it *produces* is published to **www.thezyra.in** via a PR into the separate `ZyraUpdated` repo.
+> **Two destinations, don't conflate them:** this repo (the *studio*) deploys to **Vercel**; what it *produces* is published to **www.thezyra.studio** via a PR into the separate `ZyraUpdated` repo.
 
 **Webpage prerequisite:** `/solutions` must exist on the site first (`lp-data.ts` + the `/solutions/[...path]` route). Until then, publish fails with an explicit message telling you to merge it.
 
@@ -106,7 +106,7 @@ Hosted from this repo's `main`. Full guide: [`DEPLOY.md`](DEPLOY.md).
 - **Use Vercel Pro** — `write` and `image` run up to 120s; Hobby caps at 60s.
 - Add every key from [`.env.example`](.env.example) as a **Vercel Environment Variable**.
 - **Enable Deployment Protection → Vercel Authentication** — it carries keys that spend money and can open PRs.
-- Set `NEXT_PUBLIC_SITE_URL=https://www.thezyra.in` so **View page** works from the deployed studio.
+- Set `NEXT_PUBLIC_SITE_URL=https://www.thezyra.studio` so **View page** works from the deployed studio.
 - Verify a deploy: `POST /api/llm-check`, `/api/serp-check`, `/api/reddit-check`, `/api/x-check`, `/api/ads-check`, `/api/publish-check`.
 
 ---

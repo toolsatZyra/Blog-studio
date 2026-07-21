@@ -1,13 +1,13 @@
 import type { SolutionPage } from '../types';
 
 // Mirrors the shape the live per-service pages already emit
-// (see thezyra.in src/app/ai-brand-films/page.tsx): an @graph of
+// (see thezyra.studio src/app/ai-brand-films/page.tsx): an @graph of
 // Service + FAQPage + BreadcrumbList.
 //
 // NEVER put a price in here. Schema is read by Google and AI answer engines even
 // when nothing is visible on the page - the guards module enforces this.
 
-const SITE = 'https://www.thezyra.in';
+const SITE = 'https://www.thezyra.studio';
 
 export function solutionUrl(slug: string): string {
   return `${SITE}/solutions/${slug}`;

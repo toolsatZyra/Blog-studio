@@ -5,9 +5,9 @@ const AI_CRAWLERS = ['GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'PerplexityBot', 'G
 
 /**
  * Pre-publish site check (independent of the draft): robots.txt, sitemap, and
- * AI-crawler access on thezyra.in. Public GETs only. Never blocks writing.
+ * AI-crawler access on thezyra.studio. Public GETs only. Never blocks writing.
  */
-export async function accessPreflight(site = 'https://www.thezyra.in'): Promise<ScoreCard> {
+export async function accessPreflight(site = 'https://www.thezyra.studio'): Promise<ScoreCard> {
   const checks: CheckResult[] = [];
   let robots = '';
   try {

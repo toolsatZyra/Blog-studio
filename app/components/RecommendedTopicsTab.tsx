@@ -13,7 +13,7 @@ export function RecommendedTopicsTab({
 
   return (
     <div>
-      <p className="muted small">Ranked by fit for thezyra.in. Pick one to write the blog (Part 2).</p>
+      <p className="muted small">Ranked by fit for thezyra.studio. Pick one to write the blog (Part 2).</p>
       {candidates.map((c, i) => (
         <div key={i} className={`topic-card ${c.recommended ? 'rec' : ''}`}>
           <div className="topic-head">

@@ -9,14 +9,14 @@ const CARDS = [
     href: '/blog',
     kicker: 'Part 1 + 2',
     title: 'Blog',
-    blurb: 'Research a topic, pick from scored recommendations, write it, audit it for SEO/GEO, then open a PR to thezyra.in/blog.',
+    blurb: 'Research a topic, pick from scored recommendations, write it, audit it for SEO/GEO, then open a PR to thezyra.studio/blog.',
     steps: 'research → recommend → write → edit → audit → publish',
   },
   {
     href: '/webpage',
     kicker: 'Programmatic SEO',
     title: 'Webpage',
-    blurb: 'Pick an industry and/or geography, the services to feature, and the case studies to prove it. Generates a conversion-focused landing page at thezyra.in/solutions.',
+    blurb: 'Pick an industry and/or geography, the services to feature, and the case studies to prove it. Generates a conversion-focused landing page at thezyra.studio/solutions.',
     steps: 'industry × geography × service → generate → audit → publish',
   },
 ];

@@ -4,7 +4,7 @@ import type { SocialProvider, DiscoveredQuestion } from '../types';
 // Apify credit. Returns post titles directly (no per-post crawl), so it's fast
 // enough to run inside a request. Reddit rate-limits by IP and *requires* a
 // descriptive User-Agent (a generic/browser UA gets 429/403), so we send one.
-const UA = 'zyra-blog-studio/1.0 (blog question discovery; +https://thezyra.in)';
+const UA = 'zyra-blog-studio/1.0 (blog question discovery; +https://www.thezyra.studio)';
 
 interface RedditChild {
   kind: string;

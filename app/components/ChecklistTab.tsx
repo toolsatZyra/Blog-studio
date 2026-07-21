@@ -40,7 +40,7 @@ export function ChecklistTab({ audit }: { audit?: Audit }) {
 
       <div className="card">
         <div className="export-head">
-          <h3 style={{ margin: 0 }}>Publishing preflight (thezyra.in)</h3>
+          <h3 style={{ margin: 0 }}>Publishing preflight (thezyra.studio)</h3>
           <button className="btn secondary small" onClick={runPreflight} disabled={loading}>
             {loading ? <><span className="spinner" /> Checking…</> : 'Run site check'}
           </button>

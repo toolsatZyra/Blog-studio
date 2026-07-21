@@ -37,7 +37,7 @@ export const env = {
 
   twitterApiKey: process.env.TWITTERAPI_KEY || '',
 
-  // Publishing: opens a PR on the thezyra.in repo appending to blog-data.ts.
+  // Publishing: opens a PR on the thezyra.studio repo appending to blog-data.ts.
   publish: {
     token: process.env.GITHUB_TOKEN || '',
     repo: process.env.PUBLISH_REPO || 'toolsatZyra/ZyraUpdated',

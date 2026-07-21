@@ -115,7 +115,7 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
 
       <div className="card">
         <div className="export-head">
-          <h3 style={{ margin: 0 }}>Publish to thezyra.in</h3>
+          <h3 style={{ margin: 0 }}>Publish to thezyra.studio</h3>
           <button className="btn small" onClick={publish} disabled={publishing || (audit && !audit.publishable)}>
             {publishing ? <><span className="spinner" /> Opening PR…</> : 'Open pull request →'}
           </button>
@@ -162,7 +162,7 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
         <button className="btn small" onClick={() => download(`${blogPost.slug}.html`, exports.html, 'text/html')}>Download .html</button>
         <button className="btn small" onClick={() => download(`${blogPost.slug}.blogpost.json`, JSON.stringify(blogPost, null, 2), 'application/json')}>Download BlogPost JSON</button>
       </div>
-      <CopyBlock label="CMS-ready copy (thezyra.in BlogPost)" content={blogPostTs} />
+      <CopyBlock label="CMS-ready copy (thezyra.studio BlogPost)" content={blogPostTs} />
       <CopyBlock label="Markdown" content={exports.markdown} />
       <CopyBlock label="HTML" content={exports.html} />
       <CopyBlock label="Meta tags" content={exports.metaTags} />

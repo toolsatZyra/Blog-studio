@@ -1,7 +1,7 @@
 import type { BlogPostObject } from '../types';
 import { env, isLive } from '../config';
 
-// Opens a PR on the thezyra.in repo that appends the generated BlogPost to
+// Opens a PR on the thezyra.studio repo that appends the generated BlogPost to
 // src/lib/blog-data.ts. Never commits to the default branch — always a PR the
 // team reviews and merges. Requires a GitHub token with repo access.
 

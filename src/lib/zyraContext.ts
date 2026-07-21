@@ -2,7 +2,7 @@
 // writer may assert these and nothing else numeric. See docs/zyra-context.md.
 
 export interface ZyraService {
-  slug: string; // internal-link target on thezyra.in
+  slug: string; // internal-link target on thezyra.studio
   name: string;
   summary: string;
   keywords: string[]; // used for authority-fit matching

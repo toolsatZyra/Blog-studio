@@ -87,7 +87,7 @@ export default function WebpagePage() {
           <span className="dot">●</span>
         </div>
         <p className="subtitle">
-          Industry × geography × service → a landing page at thezyra.in/solutions.
+          Industry × geography × service → a landing page at thezyra.studio/solutions.
         </p>
         <Link href="/" className="btn secondary small" style={{ marginBottom: 12, display: 'inline-block' }}>
           ← All tools

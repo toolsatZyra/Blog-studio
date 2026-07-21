@@ -4,7 +4,7 @@
 // (exporter -> cmsCopy -> here) stays safe to run in the browser. The LLM
 // classifier lives in modules/categoryClassifier.ts and imports from here.
 
-// The four real categories on thezyra.in/blog. A post's category MUST be one of
+// The four real categories on thezyra.studio/blog. A post's category MUST be one of
 // these exact strings or the site's category filter won't match it.
 export const SITE_CATEGORIES = ['Industry', 'Playbook', 'Performance', 'Operations'] as const;
 export type SiteCategory = typeof SITE_CATEGORIES[number];
