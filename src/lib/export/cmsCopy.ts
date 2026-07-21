@@ -2,7 +2,7 @@ import type { Draft, Brief, Inputs, BlogPostObject } from '../types';
 import { categoryByGoal } from '../categories';
 
 /**
- * Build the thezyra.in `BlogPost` object. `today` is injectable for stable tests.
+ * Build the thezyra.studio `BlogPost` object. `today` is injectable for stable tests.
  * `category` is the resolved site category (from the LLM classifier); when
  * omitted it falls back to the coarse goal map.
  */

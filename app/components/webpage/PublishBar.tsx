@@ -11,7 +11,7 @@ interface Result {
 }
 
 /**
- * Publish = open a PR appending this page to lp-data.ts on thezyra.in.
+ * Publish = open a PR appending this page to lp-data.ts on thezyra.studio.
  *
  * Nothing reaches the live site here: the publisher always branches and opens a
  * PR for review, exactly like the blog flow. Merging is what publishes.

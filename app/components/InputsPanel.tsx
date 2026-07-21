@@ -16,12 +16,6 @@ export function InputsPanel({
   const up = (patch: Partial<Inputs>) => setInputs({ ...inputs, ...patch });
   const upAud = (patch: Partial<Inputs['audience']>) => setInputs({ ...inputs, audience: { ...inputs.audience, ...patch } });
 
-  const geoList = inputs.audience.geographies.split(',').map((s) => s.trim()).filter(Boolean);
-  const toggleGeo = (g: string) => {
-    const next = geoList.includes(g) ? geoList.filter((x) => x !== g) : [...geoList, g];
-    upAud({ geographies: next.join(', ') });
-  };
-
   return (
     <div>
       <label>Blog topic / seed idea</label>
@@ -35,18 +29,15 @@ export function InputsPanel({
       <div className="row">
         <div>
           <label>Geographies</label>
-          <div className="chips" style={{ paddingTop: 4 }}>
-            {GEOS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                className={`chip geo ${geoList.includes(g) ? 'active' : ''}`}
-                onClick={() => toggleGeo(g)}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
+          <input
+            list="blog-geo-suggestions"
+            value={inputs.audience.geographies}
+            onChange={(e) => upAud({ geographies: e.target.value })}
+            placeholder="e.g. India, Japan (type anything)"
+          />
+          <datalist id="blog-geo-suggestions">
+            {GEOS.map((g) => <option key={g} value={g} />)}
+          </datalist>
         </div>
         <div>
           <label>Roles</label>

@@ -1,7 +1,7 @@
 import type { Brief } from '../types';
 
 export function toMetaTags(brief: Brief): string {
-  const url = `https://www.thezyra.in/blog/${brief.slug}`;
+  const url = `https://www.thezyra.studio/blog/${brief.slug}`;
   return [
     `<title>${brief.metaTitle}</title>`,
     `<meta name="description" content="${brief.metaDescription}" />`,

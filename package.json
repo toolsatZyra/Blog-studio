@@ -1,8 +1,8 @@
 {
-  "name": "zyra-blog-studio",
+  "name": "programmatic-seo",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal tool that builds two things for thezyra.in: SEO/GEO/AEO blog posts, and programmatic SEO landing pages.",
+  "description": "Internal tool that builds two things for thezyra.studio: SEO/GEO/AEO blog posts, and programmatic SEO landing pages.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

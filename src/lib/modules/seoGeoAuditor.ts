@@ -2,7 +2,7 @@ import type { Draft, Brief, Audit, Inputs } from '../types';
 import { seoChecks } from '../scoring/seoChecks';
 import { geoChecks } from '../scoring/geoChecks';
 import { humanVoice } from '../scoring/humanVoice';
-import { parseMarkets } from '../markets';
+import { parseGeographies } from '../markets';
 
 // Checks that must pass before a draft can be published (critical quality gates).
 //
@@ -27,9 +27,11 @@ const SCORE_FLOOR = 60;
 
 /** Scores the draft on SEO and GEO/AEO (two separate scores) + the human-voice gate. */
 export function seoGeoAuditor(draft: Draft, brief: Brief, inputs?: Inputs): Audit {
-  const markets = inputs ? parseMarkets(inputs.audience.geographies) : [];
+  const { markets, unknown } = inputs
+    ? parseGeographies(inputs.audience.geographies)
+    : { markets: [], unknown: [] };
   const seo = seoChecks(draft, brief);
-  const geo = geoChecks(draft, brief, markets);
+  const geo = geoChecks(draft, brief, markets, unknown.length > 0);
   const hv = humanVoice(draft);
 
   const blockers: string[] = [];

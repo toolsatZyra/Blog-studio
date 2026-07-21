@@ -1,13 +1,13 @@
-# Zyra Blog Studio — Product Spec
+# Programmatic SEO — Product Spec
 
-**Version:** 1.0 (2026-07-13) · **Owner:** Zyra (thezyra.in) · **Type:** Internal tool
+**Version:** 1.0 (2026-07-13) · **Owner:** Zyra (thezyra.studio) · **Type:** Internal tool
 **Related docs:** [API_RECOMMENDATIONS.md](./API_RECOMMENDATIONS.md) · [WRITING_PLAYBOOK.md](./WRITING_PLAYBOOK.md) · [zyra-context.md](./zyra-context.md) · [design spec](./superpowers/specs/2026-07-13-zyra-blog-studio-design.md)
 
 ---
 
 ## 1. Purpose
 
-An internal web app that automates Zyra's blog-writing workflow so the team can update thezyra.in regularly with credible, human-sounding, SEO + GEO/AEO-optimised posts. It works in **two parts**: **(1) Find the topic** — research the space and **recommend the best-suited topics with justification**, from which you pick one; **(2) Write the blog** — generate a brief → write a human draft → audit for SEO/GEO/AEO → export CMS-ready assets for the chosen topic.
+An internal web app that automates Zyra's blog-writing workflow so the team can update thezyra.studio regularly with credible, human-sounding, SEO + GEO/AEO-optimised posts. It works in **two parts**: **(1) Find the topic** — research the space and **recommend the best-suited topics with justification**, from which you pick one; **(2) Write the blog** — generate a brief → write a human draft → audit for SEO/GEO/AEO → export CMS-ready assets for the chosen topic.
 
 It runs fully on realistic **mock data with zero API keys** (so anyone can try it immediately), and each data source switches to **live** the moment its key is added.
 
@@ -46,13 +46,13 @@ The tool is split into two phases with a **topic-recommendation gate** between t
 ### Part 1 — Find the blog topic
 1. **Inputs** — the form above; "Run Research" starts the pipeline.
 2. **Research** — topic clusters, Reddit questions, X discussion angles, Google People-Also-Ask, autocomplete queries, related keywords, competitor article gaps, search intent. Every item shows a `mock`/`live` source badge.
-3. **Recommended Topics** — the app **recommends the best-suited blog topics for thezyra.in, each with a plain-English justification** (why it fits the audience, the demand evidence behind it, how well it maps to Zyra's services, and where competitors are weak), plus the total score and five sub-scores. The top pick is badged **"Recommended."** You **choose one topic** → this unlocks Part 2. Justifications are built from the real signals, never invented.
+3. **Recommended Topics** — the app **recommends the best-suited blog topics for thezyra.studio, each with a plain-English justification** (why it fits the audience, the demand evidence behind it, how well it maps to Zyra's services, and where competitors are weak), plus the total score and five sub-scores. The top pick is badged **"Recommended."** You **choose one topic** → this unlocks Part 2. Justifications are built from the real signals, never invented.
 
 ### Part 2 — Write the blog (locked until a topic is chosen)
 4. **Content brief** — recommended + alternative titles, meta title/description, URL slug, primary/secondary keywords, search intent, target reader, angle, H2/H3 outline, questions to answer, internal links to Zyra service pages, external source suggestions, FAQ, featured-snippet answer, GEO/AEO answer blocks.
 5. **Blog draft** — full post: strong human intro, clear POV, short paragraphs, useful examples, natural Zyra mentions, helpful CTA, question-led sections, direct-answer paragraphs for AI engines, FAQ at the end. No filler, no fabricated stats.
-6. **SEO/GEO/AEO checklist** — two separate scores (SEO and GEO/AEO) with pass/warn/fail + specific fixes, a human-voice gate, and a **Publishing preflight** panel (robots.txt, sitemap, AI-crawler access, BlogPosting/FAQPage schema on thezyra.in).
-7. **Export** — Markdown, HTML, meta title/description, FAQ schema JSON-LD, blog brief JSON, and CMS-ready copy (a `BlogPost` object that pastes into thezyra.in's `blog-data.ts`).
+6. **SEO/GEO/AEO checklist** — two separate scores (SEO and GEO/AEO) with pass/warn/fail + specific fixes, a human-voice gate, and a **Publishing preflight** panel (robots.txt, sitemap, AI-crawler access, BlogPosting/FAQPage schema on thezyra.studio).
+7. **Export** — Markdown, HTML, meta title/description, FAQ schema JSON-LD, blog brief JSON, and CMS-ready copy (a `BlogPost` object that pastes into thezyra.studio's `blog-data.ts`).
 
 ## 6. Topic scoring model
 
@@ -103,5 +103,5 @@ Every source is an adapter behind a registry; a missing key silently uses the mo
 - Runs end-to-end with **zero keys** on mocks.
 - Each source flips to live independently by adding its key — no code change.
 - Generated drafts contain **no fabricated numbers** and pass the human-voice gate.
-- Export produces a `BlogPost` object that pastes into thezyra.in with only the `poster` image to fill.
+- Export produces a `BlogPost` object that pastes into thezyra.studio with only the `poster` image to fill.
 - SEO and GEO/AEO reported as **two separate scores**, each with actionable fixes.

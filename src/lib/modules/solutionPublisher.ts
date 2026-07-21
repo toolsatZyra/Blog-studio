@@ -1,7 +1,7 @@
 import type { SolutionPage } from '../types';
 import { env, isLive } from '../config';
 
-// Opens a PR on thezyra.in that appends a generated SolutionPage to lp-data.ts.
+// Opens a PR on thezyra.studio that appends a generated SolutionPage to lp-data.ts.
 // Never commits to the default branch - always a branch + PR the team reviews,
 // exactly like the blog flow. Nothing reaches the live site without a merge.
 
@@ -13,7 +13,7 @@ function ghHeaders() {
     accept: 'application/vnd.github+json',
     'x-github-api-version': '2022-11-28',
     'content-type': 'application/json',
-    'user-agent': 'zyra-blog-studio',
+    'user-agent': 'programmatic-seo',
   };
 }
 

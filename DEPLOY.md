@@ -1,4 +1,4 @@
-# Deploying Zyra Blog Studio to Vercel
+# Deploying Programmatic SEO to Vercel
 
 This is an **internal tool with live API keys**. Treat the deployment as private.
 

@@ -193,7 +193,7 @@ export interface Audit {
   blockers: string[]; // human-readable reasons publishing is blocked
 }
 
-/** Zyra's existing CMS post shape (src/lib/blog-data.ts on thezyra.in). */
+/** Zyra's existing CMS post shape (src/lib/blog-data.ts on thezyra.studio). */
 export interface BlogPostObject {
   slug: string;
   title: string;
@@ -240,7 +240,7 @@ export interface RunState {
   providerStatus: Record<string, SourceMode>;
 }
 
-// ── Webpage flow (/webpage → thezyra.in/solutions/[slug]) ────────────────────
+// ── Webpage flow (/webpage → thezyra.studio/solutions/[slug]) ────────────────────
 // Programmatic SEO landing pages. See
 // docs/superpowers/specs/2026-07-16-programmatic-solutions-pages-design.md
 
@@ -268,7 +268,7 @@ export interface SolutionProof {
 }
 
 /**
- * The object the publisher appends to lp-data.ts on thezyra.in, and the
+ * The object the publisher appends to lp-data.ts on thezyra.studio, and the
  * contract the site's /solutions/[slug] route renders. Keep field names stable —
  * the site reads exactly these.
  */

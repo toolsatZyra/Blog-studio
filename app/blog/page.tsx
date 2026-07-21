@@ -36,6 +36,8 @@ const TABS: { id: TabId; label: string; part: 1 | 2 }[] = [
   { id: 'export', label: 'Export', part: 2 },
 ];
 
+// Keeps the old name deliberately: the app was renamed to Programmatic SEO,
+// but renaming this key would orphan every draft already saved in a browser.
 const STORAGE_KEY = 'zyra-blog-studio:v1';
 
 export default function Home() {

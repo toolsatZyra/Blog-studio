@@ -1,8 +1,8 @@
 # Zyra — Prefilled Context (default for the tool, editable)
 
-> **Evidence rule:** Only the proof points listed here (all verified on thezyra.in) may be stated as fact in generated blogs. The writer must never invent brand counts, creative volumes, prices, timelines, or client outcomes. Any other statistic must be sourced or written as `[source needed]`.
+> **Evidence rule:** Only the proof points listed here (all verified on thezyra.studio) may be stated as fact in generated blogs. The writer must never invent brand counts, creative volumes, prices, timelines, or client outcomes. Any other statistic must be sourced or written as `[source needed]`.
 
-**Who:** Zyra is **India's AI Content Studio** (also positioned as a *Global AI Content Studio*), based in Gurgaon, Haryana. Core line: **"Where AI meets Cinema."** Zyra produces brand films, short films, micro drama, OTT-ready content, performance ads, and social media content — combining cinematic quality and AI-accelerated production with human-directed creative judgment, for faster timelines, lower cost, and culture-speed delivery. Website: https://www.thezyra.in · marketersatzyra@gmail.com
+**Who:** Zyra is **India's AI Content Studio** (also positioned as a *Global AI Content Studio*), based in Gurgaon, Haryana. Core line: **"Where AI meets Cinema."** Zyra produces brand films, short films, micro drama, OTT-ready content, performance ads, and social media content — combining cinematic quality and AI-accelerated production with human-directed creative judgment, for faster timelines, lower cost, and culture-speed delivery. Website: https://www.thezyra.studio · marketersatzyra@gmail.com
 
 **Markets served:** India, the **GCC** (Gulf markets — e.g. UAE, Saudi Arabia), and the **US**. Tailor examples and references to the target market of each post.
 
@@ -27,7 +27,7 @@ Adani, NDTV, Cars24, Swiggy, Wildstone, Meesho, Country Delight, VAMA, Mederma. 
 ## Voice profile (for the draft + human-editor)
 Confident, cinematic, first-person plural ("we"), specific and concrete, short punchy declaratives mixed with longer flowing lines, contrarian/industry-shift framing, occasional blockquote pull-quotes. Indian market context (D2C, FMCG, fintech, OTT). Cinematic **but** genuinely useful — reads like a sharp strategist/editor, not marketing filler. No hype phrases ("unlock the power of", "revolutionize your brand", "seamlessly", "game-changer", "delve", "in today's fast-paced digital landscape").
 
-## Existing blog format on thezyra.in (CMS-ready export target)
+## Existing blog format on thezyra.studio (CMS-ready export target)
 Next.js/TS site. `src/lib/blog-data.ts` → `ALL_POSTS: BlogPost[]`:
 ```ts
 interface BlogPost {

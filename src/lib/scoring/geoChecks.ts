@@ -4,7 +4,7 @@ import { ZYRA_ENTITIES } from '../zyraContext';
 import { currencyMismatch, type Market } from '../markets';
 
 /** GEO/AEO scorecard. Rewards sourced claims + structure; flags unsupported stats. */
-export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): ScoreCard {
+export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = [], hasUnknownMarket = false): ScoreCard {
   const text = draftText(draft);
   const first100 = text.split(/\s+/).slice(0, 100).join(' ');
   const h2s = draft.blocks.filter((b) => b.type === 'h2');
@@ -26,7 +26,7 @@ export function geoChecks(draft: Draft, brief: Brief, markets: Market[] = []): S
 
   // Unsupported-stats check: numbers that aren't Zyra proof points and have no nearby source.
   const unsupported = findUnsupportedStats(draft);
-  const wrongCurrency = currencyMismatch(text, markets);
+  const wrongCurrency = currencyMismatch(text, markets, hasUnknownMarket);
 
   return buildCard([
     check('direct-answer', 'Direct answer in first ~100 words',
