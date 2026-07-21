@@ -1,4 +1,4 @@
-# API Recommendations — Zyra Blog Studio
+# API Recommendations — Programmatic SEO
 
 **Last reviewed:** 2026-07-13. **Read this first:** prices and free-tier terms change often. Below, **verified structural facts** (e.g. "pay-as-you-go", "requires a separate agreement") are separated from **cost estimates** (which the app computes from call/token counts and labels as estimates — they are **not** quoted prices). Confirm any number on the vendor's live pricing page before you buy. Sources are linked; where a figure is only directional it is marked *(estimate — verify)*.
 

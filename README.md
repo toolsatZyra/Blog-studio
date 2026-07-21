@@ -1,4 +1,4 @@
-# Zyra Studio
+# Programmatic SEO
 
 An internal tool that builds two things for [thezyra.studio](https://www.thezyra.studio). The first screen asks which:
 

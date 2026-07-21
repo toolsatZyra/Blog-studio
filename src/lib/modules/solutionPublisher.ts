@@ -13,7 +13,7 @@ function ghHeaders() {
     accept: 'application/vnd.github+json',
     'x-github-api-version': '2022-11-28',
     'content-type': 'application/json',
-    'user-agent': 'zyra-blog-studio',
+    'user-agent': 'programmatic-seo',
   };
 }
 

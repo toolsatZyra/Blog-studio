@@ -1,4 +1,4 @@
-# Zyra Blog Studio — Product Spec
+# Programmatic SEO — Product Spec
 
 **Version:** 1.0 (2026-07-13) · **Owner:** Zyra (thezyra.studio) · **Type:** Internal tool
 **Related docs:** [API_RECOMMENDATIONS.md](./API_RECOMMENDATIONS.md) · [WRITING_PLAYBOOK.md](./WRITING_PLAYBOOK.md) · [zyra-context.md](./zyra-context.md) · [design spec](./superpowers/specs/2026-07-13-zyra-blog-studio-design.md)

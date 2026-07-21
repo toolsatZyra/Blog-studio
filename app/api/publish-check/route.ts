@@ -15,7 +15,7 @@ function headers() {
     authorization: `Bearer ${env.publish.token}`,
     accept: 'application/vnd.github+json',
     'x-github-api-version': '2022-11-28',
-    'user-agent': 'zyra-blog-studio',
+    'user-agent': 'programmatic-seo',
   };
 }
 
