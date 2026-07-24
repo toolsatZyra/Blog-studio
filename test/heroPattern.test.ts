@@ -38,7 +38,7 @@ test('varies by slug: different posts render differently', () => {
   assert.notEqual(a, b, 'two slugs must not render identically');
   // Each motif draws with its own primitive - lines, paths, circles or rects -
   // so assert that art exists rather than that it is any one shape.
-  const draws = (s: string) => /<line|<path|<circle|<rect/.test(s);
+  const draws = (s: string) => /<line|<path|<circle|<rect|<ellipse|<polygon/.test(s);
   assert.ok(draws(a) && draws(b), 'both draw geometry');
 });
 
@@ -74,7 +74,7 @@ test('every motif renders a complete hero', () => {
     assert.ok(svg.includes(`data-motif="${m}"`), `${m}: tagged with its motif`);
     // the motif must actually draw something behind the chrome
     const art = svg.split('<rect width=')[1] ?? '';
-    assert.ok(/<line|<path|<circle|<rect/.test(art), `${m}: draws geometry`);
+    assert.ok(/<line|<path|<circle|<rect|<ellipse|<polygon/.test(art), `${m}: draws geometry`);
   }
 });
 

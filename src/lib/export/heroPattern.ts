@@ -1,6 +1,6 @@
 // The blog hero as a generated PATTERN, not a photo.
 //
-// One system, eight motifs. Every hero shares the same chrome - near-black
+// One system, sixteen motifs. Every hero shares the same chrome - near-black
 // field, gold glow, bottom fade, studio eyebrow, cream serif title, gold rule -
 // and the slug picks which motif fills the space behind it:
 //
@@ -25,7 +25,10 @@ export const GOLD = '#c9a876';
 const CREAM = '#ece9e2';
 const EYEBROW = 'ZYRA · WHERE AI MEETS CINEMA';
 
-export const MOTIFS = ['rays', 'contour', 'frames', 'arcs', 'grid', 'aperture', 'waveform', 'horizon'] as const;
+export const MOTIFS = [
+  'rays', 'contour', 'frames', 'arcs', 'grid', 'aperture', 'waveform', 'horizon',
+  'timeline', 'nodes', 'spectrum', 'flare', 'crosshatch', 'orbit', 'thirds', 'stairs',
+] as const;
 export type Motif = (typeof MOTIFS)[number];
 
 export interface PatternInput {
@@ -241,6 +244,142 @@ function horizonMotif(w: number, h: number, rand: () => number): string {
   return out.join('');
 }
 
+
+/** An NLE editing timeline - stacked clip bars. The edit bay, literally. */
+function timelineMotif(w: number, h: number, rand: () => number): string {
+  const tracks = 4 + Math.floor(rand() * 2);
+  const x0 = w * 0.40, span = w * 0.56;
+  const y0 = h * 0.12, gap = h * 0.055;
+  const bh = gap * 0.52;
+  const out: string[] = [];
+  for (let t = 0; t < tracks; t++) {
+    const y = y0 + t * gap;
+    let x = x0 + rand() * span * 0.08;
+    while (x < x0 + span) {
+      const clip = span * (0.08 + rand() * 0.22);
+      const end = Math.min(x + clip, x0 + span);
+      out.push(`<rect x="${round(x)}" y="${round(y)}" width="${round(end - x)}" height="${round(bh)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.14 + rand() * 0.12).toFixed(3)}"/>`);
+      x = end + span * (0.015 + rand() * 0.03);
+    }
+  }
+  return out.join('');
+}
+
+/** A connected node graph - the AI half of the studio. */
+function nodesMotif(w: number, h: number, rand: () => number): string {
+  const n = 7 + Math.floor(rand() * 4);
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    pts.push({ x: w * (0.42 + rand() * 0.54), y: h * (0.08 + rand() * 0.42) });
+  }
+  const out: string[] = [];
+  for (let i = 0; i < pts.length; i++) {
+    // link each node to its nearest neighbour ahead - a graph, not a scribble
+    let best = -1, bd = Infinity;
+    for (let j = i + 1; j < pts.length; j++) {
+      const d = (pts[i].x - pts[j].x) ** 2 + (pts[i].y - pts[j].y) ** 2;
+      if (d < bd) { bd = d; best = j; }
+    }
+    if (best >= 0) {
+      out.push(`<line x1="${round(pts[i].x)}" y1="${round(pts[i].y)}" x2="${round(pts[best].x)}" y2="${round(pts[best].y)}" stroke="${GOLD}" stroke-width="1" opacity="0.14"/>`);
+    }
+  }
+  for (const p of pts) {
+    out.push(`<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${round(Math.max(2, w * 0.0026))}" fill="${GOLD}" opacity="0.30"/>`);
+  }
+  return out.join('');
+}
+
+/** Broadcast colour bars, drawn as outlines - the test-card reference. */
+function spectrumMotif(w: number, h: number, rand: () => number): string {
+  const bars = 7 + Math.floor(rand() * 3);
+  const x0 = w * 0.44, span = w * 0.52;
+  const bw = span / bars;
+  const top = h * 0.09, bh = h * 0.30;
+  const out: string[] = [];
+  for (let i = 0; i < bars; i++) {
+    const x = x0 + i * bw;
+    const inset = bw * 0.12;
+    out.push(`<rect x="${round(x + inset)}" y="${round(top)}" width="${round(bw - inset * 2)}" height="${round(bh * (0.55 + rand() * 0.45))}" fill="${GOLD}" opacity="${(0.06 + rand() * 0.10).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** An anamorphic lens flare - one horizontal streak through the glow. */
+function flareMotif(w: number, h: number, rand: () => number): string {
+  const y = h * (0.20 + rand() * 0.16);
+  const out: string[] = [];
+  out.push(`<line x1="${round(w * 0.06)}" y1="${round(y)}" x2="${round(w * 0.99)}" y2="${round(y)}" stroke="${GOLD}" stroke-width="1.5" opacity="0.26"/>`);
+  out.push(`<line x1="${round(w * 0.22)}" y1="${round(y)}" x2="${round(w * 0.92)}" y2="${round(y)}" stroke="${GOLD}" stroke-width="3" opacity="0.10"/>`);
+  // a couple of faint iris ghosts along the streak
+  for (let i = 0; i < 3; i++) {
+    const cx = w * (0.42 + i * 0.18 + rand() * 0.03);
+    out.push(`<circle cx="${round(cx)}" cy="${round(y)}" r="${round(w * (0.012 + rand() * 0.014))}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="0.13"/>`);
+  }
+  return out.join('');
+}
+
+/** Fine diagonal cross-hatching - a drafting texture. */
+function crosshatchMotif(w: number, h: number, rand: () => number): string {
+  const step = w * (0.035 + rand() * 0.015);
+  const x0 = w * 0.40;
+  const out: string[] = [];
+  for (let x = x0; x < w * 1.1; x += step) {
+    out.push(`<line x1="${round(x)}" y1="${round(h * 0.06)}" x2="${round(x - h * 0.42)}" y2="${round(h * 0.48)}" stroke="${GOLD}" stroke-width="1" opacity="0.10"/>`);
+  }
+  for (let x = x0; x < w * 1.1; x += step * 2) {
+    out.push(`<line x1="${round(x - h * 0.42)}" y1="${round(h * 0.06)}" x2="${round(x)}" y2="${round(h * 0.48)}" stroke="${GOLD}" stroke-width="1" opacity="0.07"/>`);
+  }
+  return out.join('');
+}
+
+/** Tilted concentric ellipses - orbital rings. */
+function orbitMotif(w: number, h: number, rand: () => number): string {
+  const cx = w * (0.72 + rand() * 0.08), cy = h * (0.30 + rand() * 0.08);
+  const rings = 3 + Math.floor(rand() * 3);
+  const tilt = -22 - rand() * 26;
+  const out: string[] = [];
+  for (let i = 0; i < rings; i++) {
+    const rx = Math.min(w, h) * (0.16 + i * 0.075);
+    const ry = rx * (0.34 + rand() * 0.12);
+    out.push(`<ellipse cx="${round(cx)}" cy="${round(cy)}" rx="${round(rx)}" ry="${round(ry)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.20 - i * 0.025).toFixed(3)}" transform="rotate(${round(tilt)} ${round(cx)} ${round(cy)})"/>`);
+  }
+  return out.join('');
+}
+
+/** Viewfinder framing marks - corner brackets and thirds guides. */
+function thirdsMotif(w: number, h: number, rand: () => number): string {
+  const x = w * 0.46, y = h * 0.08;
+  const bw = w * 0.48, bh = h * 0.40;
+  const arm = Math.min(bw, bh) * 0.16;
+  const out: string[] = [];
+  const corner = (px: number, py: number, sx: number, sy: number) =>
+    `<path d="M${round(px + sx * arm)} ${round(py)} H${round(px)} V${round(py + sy * arm)}" fill="none" stroke="${GOLD}" stroke-width="1.5" opacity="0.26"/>`;
+  out.push(corner(x, y, 1, 1), corner(x + bw, y, -1, 1), corner(x, y + bh, 1, -1), corner(x + bw, y + bh, -1, -1));
+  for (let i = 1; i <= 2; i++) {
+    out.push(`<line x1="${round(x + (bw * i) / 3)}" y1="${round(y)}" x2="${round(x + (bw * i) / 3)}" y2="${round(y + bh)}" stroke="${GOLD}" stroke-width="1" opacity="0.08"/>`);
+    out.push(`<line x1="${round(x)}" y1="${round(y + (bh * i) / 3)}" x2="${round(x + bw)}" y2="${round(y + (bh * i) / 3)}" stroke="${GOLD}" stroke-width="1" opacity="0.08"/>`);
+  }
+  // a small focus reticle, placed on a thirds intersection
+  const fx = x + (bw * (rand() < 0.5 ? 1 : 2)) / 3, fy = y + (bh * (rand() < 0.5 ? 1 : 2)) / 3;
+  out.push(`<circle cx="${round(fx)}" cy="${round(fy)}" r="${round(arm * 0.34)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="0.22"/>`);
+  return out.join('');
+}
+
+/** Stepped blocks descending - a stagger/ramp. */
+function stairsMotif(w: number, h: number, rand: () => number): string {
+  const steps = 5 + Math.floor(rand() * 3);
+  const bw = w * 0.075, bh = h * 0.052;
+  let x = w * 0.44, y = h * 0.11;
+  const out: string[] = [];
+  for (let i = 0; i < steps; i++) {
+    out.push(`<rect x="${round(x)}" y="${round(y)}" width="${round(bw * (1 + rand() * 0.5))}" height="${round(bh)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.22 - i * 0.02).toFixed(3)}"/>`);
+    x += bw * (0.8 + rand() * 0.5);
+    y += bh * (1.1 + rand() * 0.5);
+  }
+  return out.join('');
+}
+
 const RENDERERS: Record<Motif, (w: number, h: number, rand: () => number) => string> = {
   rays: raysMotif,
   contour: contourMotif,
@@ -250,6 +389,14 @@ const RENDERERS: Record<Motif, (w: number, h: number, rand: () => number) => str
   aperture: apertureMotif,
   waveform: waveformMotif,
   horizon: horizonMotif,
+  timeline: timelineMotif,
+  nodes: nodesMotif,
+  spectrum: spectrumMotif,
+  flare: flareMotif,
+  crosshatch: crosshatchMotif,
+  orbit: orbitMotif,
+  thirds: thirdsMotif,
+  stairs: stairsMotif,
 };
 
 /**
