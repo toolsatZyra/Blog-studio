@@ -3,7 +3,8 @@ import { useState } from 'react';
 import type { Exports, Brief, Inputs, HeroImage, Audit, Draft } from '@/lib/types';
 import { CopyBlock } from './ui';
 import { buildReviewDocx, DOCX_MIME } from '@/lib/export/docx';
-import { applyHeroSignature } from '@/lib/export/applyHeroSignature';
+import { heroPatternSvg } from '@/lib/export/heroPattern';
+import { svgToPngBase64 } from '@/lib/export/rasterizeSvg';
 
 function download(name: string, content: string, type = 'text/plain') {
   const blob = new Blob([content], { type });
@@ -57,33 +58,28 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
   const blogPost = { ...exports.blogPost, poster };
   const blogPostTs = `// paste into src/lib/blog-data.ts → ALL_POSTS\n${JSON.stringify(blogPost, null, 2)}`;
 
+  // The hero is a generated PATTERN, not a photo: a deterministic branded SVG
+  // (cinematic light rays + title, seeded by the slug) rasterised to PNG in the
+  // browser. No API call, no cost, and every post gets a hero from one family.
   async function generateImage() {
+    if (!exports) return;
     setImgLoading(true); setImgErr(''); setHero(undefined);
     try {
-      const res = await fetch('/api/image', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          title: exports!.blogPost.title, slug: exports!.blogPost.slug,
-          angle: brief?.angle, zyraContext: inputs?.zyraContext,
-        }),
+      const { title, slug } = exports.blogPost;
+      const W = 1536, H = 1024;
+      const svg = heroPatternSvg({ title, slug, width: W, height: H });
+      const base64 = await svgToPngBase64(svg, W, H);
+      setHero({
+        dataUrl: `data:image/png;base64,${base64}`,
+        base64,
+        mimeType: 'image/png',
+        ext: 'png',
+        filename: `${slug}.png`,
+        posterPath: `/posters/${slug}.png`,
+        prompt: 'Generated hero pattern (cinematic light rays)',
+        mode: 'live',
+        publishable: true,
       });
-      const data = await res.json();
-      if (data.error) { setImgErr(data.error); setImgLoading(false); return; }
-
-      let heroImage = data.heroImage as HeroImage;
-      // Bake the house signature into the real PNG so every published hero shares
-      // it. The mock SVG fallback already carries this look, so signing it would
-      // double-stamp - only composite a live raster image. A compositing failure
-      // must not lose the image: fall back to the unsigned hero.
-      if (heroImage?.mode === 'live' && heroImage.ext === 'png') {
-        try {
-          const signed = await applyHeroSignature(heroImage.base64);
-          heroImage = { ...heroImage, base64: signed, dataUrl: `data:image/png;base64,${signed}` };
-        } catch (e) {
-          console.warn('[hero signature] skipped:', (e as Error).message);
-        }
-      }
-      setHero(heroImage);
     } catch (e) { setImgErr((e as Error).message); }
     setImgLoading(false);
   }
@@ -109,9 +105,9 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
     <div>
       <div className="card">
         <div className="export-head">
-          <h3 style={{ margin: 0 }}>Hero image</h3>
+          <h3 style={{ margin: 0 }}>Hero pattern</h3>
           <button className="btn secondary small" onClick={generateImage} disabled={imgLoading}>
-            {imgLoading ? <><span className="spinner" /> Generating…</> : hero ? 'Regenerate' : 'Generate hero image'}
+            {imgLoading ? <><span className="spinner" /> Generating…</> : hero ? 'Regenerate' : 'Generate hero pattern'}
           </button>
         </div>
         {imgErr && <div className="error">{imgErr}</div>}
@@ -121,12 +117,10 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
             <img src={hero.dataUrl} alt="Generated hero" style={{ width: '100%', borderRadius: 8, border: '1px solid var(--border)' }} />
             <p className="muted small" style={{ marginBottom: 0 }}>
               <span className={`badge ${hero.mode}`}>{hero.mode}</span>{' '}
-              {hero.publishable
-                ? <>Will be committed to <code>public/posters/{hero.filename}</code> and set as the poster.</>
-                : <>Sample preview only (no OpenAI key). Poster stays a placeholder until a real image is generated.</>}
+              Will be committed to <code>public/posters/{hero.filename}</code> and set as the poster.
             </p>
           </div>
-        ) : <p className="muted small">Generate a cinematic poster (OpenAI when configured; a branded sample otherwise).</p>}
+        ) : <p className="muted small">A deterministic branded pattern — cinematic light rays and the title, seeded by the slug so every post gets its own. No API, no cost.</p>}
       </div>
 
       <div className="card">

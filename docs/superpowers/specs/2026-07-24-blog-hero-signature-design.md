@@ -1,107 +1,89 @@
-# Blog hero light signature — baked into the image, in the studio
+# Blog hero as a generated pattern (cinematic light rays)
 
 **Date:** 2026-07-24
-**Status:** Approved — design locked (user, 2026-07-24)
-**Scope:** Studio repo (`Programmatic-SEO`) only. **The website repo is never touched.**
+**Status:** Implemented (user approved the look, 2026-07-24)
+**Scope:** Studio repo (`Programmatic-SEO`) only. The website repo is never touched.
+
+## How this spec evolved
+
+It began as "add a light-signature overlay to the AI photo hero" (site-render),
+was revised to "bake that signature into the photo in the studio", and finally
+pivoted to **replace the photo entirely with a generated pattern**. The user's
+words: "generate a pattern in place of these image." Each earlier approach is
+superseded; this document describes what shipped.
 
 ## Problem
 
-Blog hero images have no shared visual signature. `imageGenerator.ts` prompts
-OpenAI for a "dark, gold-accent, filmic" look, but an image model varies every
-generation, so the prompt gives a vibe, never a repeatable pattern. Posts sit
-side by side on the blog looking like unrelated images rather than one set.
+Blog heroes were photorealistic images from OpenAI. Two issues:
 
-The user wants every blog hero to carry the same recognizable pattern.
+1. **No repeatable house style** — an image model varies every run, so posts sat
+   side by side looking unrelated.
+2. **Cost and unpredictability** — every hero was a paid API call, and confirming
+   a given hero carried any shared treatment was unreliable.
 
-## Decisions (user, 2026-07-24)
+## Decision (user, 2026-07-24)
 
-**1. The pattern is a "light signature" (option C of four shown).**
+The hero is a **deterministic branded pattern**, not a photo:
 
-Top-right gold glow + dark bottom fade + a short gold rule. Chosen over film
-texture (too subtle), a branded frame/wordmark (reads as a watermark, competes
-with the H1 the site lays over the hero), and a duotone grade (flattens the AI's
-colour work). C is already the look of the studio's own SVG fallback
-(`imageGenerator.ts` `brandedSvg`), so live photos and fallbacks finally agree.
+- **Style: cinematic light rays** (chosen over contour-field and film-frames, and
+  over a decorative repeating pattern). A near-black field, a fan of thin gold
+  "projector" rays from a top corner, the studio eyebrow, the post title in cream
+  serif, and the gold rule. Taste reference: Nicolas Solerieu's minimal dark
+  geometric blog covers — sparse, one accent on near-black.
+- **Seeded by the slug** so every post gets a hero from the same family that still
+  differs post to post (ray count, spread, positions).
+- **Generated in the browser, no API** — instant, free, identical every time for a
+  given post.
 
-**2. Baked into the image in the studio — NOT a website change.**
+### Consequences
 
-An earlier draft of this spec applied the pattern as a render-time overlay in the
-website repo (`ZyraUpdated`). The user ruled that out: the website's code is not
-to be touched from here. So the signature is composited onto the generated PNG
-inside the studio instead. It lives entirely in `Programmatic-SEO`.
-
-| Consequence | Detail |
+| | |
 |---|---|
-| Travels with the file | The pattern is part of the PNG, so it shows on-site, in OG/social thumbnails, everywhere the poster is used. |
-| **New images only** | Already-published posters are unchanged. A post gets the signature only when its hero is (re)generated. Accepted. |
-| No website edit | Nothing in `ZyraUpdated` changes. The site keeps rendering `post.poster` exactly as it does today. |
+| OpenAI photo path retired | `imageGenerator.ts` and `POST /api/image` removed. The pattern needs no server, and removing the endpoint also stops the public studio from being able to spend OpenAI credits. |
+| Signature-overlay code retired | `heroSignature.ts` / `applyHeroSignature.ts` (baked a mark onto photos) are gone — the pattern carries the glow and rule itself. |
+| Existing posters | Unchanged. A post gets a pattern hero when its hero is (re)generated. |
+| Website | Untouched. The site still renders `post.poster` as a committed PNG exactly as before. |
 
 ## Design
 
-### Where it happens: client-side, on the generated PNG
+Two units plus one wiring change, all in the studio:
 
-Image generation returns a PNG from `/api/image` (server) to the Export tab
-(browser). The signature is composited **in the browser** using the Canvas 2D
-API — so it adds **no dependency** (the project stays at next/react/docx) and is
-deterministic: the same overlay math runs every time.
+1. `src/lib/export/heroPattern.ts` — **pure, unit-tested.**
+   `heroPatternSvg({title, slug, width, height})` returns the hero as an SVG
+   string. A slug hash seeds a small PRNG (mulberry32) that places the rays, so
+   output is deterministic and varies per post. Every dimension is a fraction of
+   width/height. No DOM, no `Date`, no `Math.random` — matching the library's
+   determinism rule.
 
-The composite replaces `hero.base64` / `hero.dataUrl` before anything is
-previewed or published, so **what you see is what publishes** — the existing
-principle of this tool.
+2. `src/lib/export/rasterizeSvg.ts` — **thin browser wrapper.**
+   `svgToPngBase64(svg, w, h)` draws the SVG on a canvas and returns PNG base64.
+   The site commits and renders a PNG poster, so the SVG is rasterised at export
+   time. No unit test (needs a DOM); all design lives in unit 1.
 
-### Two units, split so the math is testable
+3. `app/components/ExportTab.tsx` — `generateImage()` now builds the pattern SVG,
+   rasterises it, and sets a publishable PNG hero (`/posters/{slug}.png`). No
+   `fetch('/api/image')`. Card copy updated from "cinematic poster (OpenAI…)" to
+   the pattern description.
 
-1. `src/lib/export/heroSignature.ts` — **pure, unit-tested.**
-   `heroSignatureSvg(width, height): string` returns the overlay as an SVG
-   string: the three C elements, sized relative to the image dimensions
-   (glow radius, fade stops, rule position/length all derived from w/h). No DOM,
-   so `node:test` can assert its structure and that it scales with dimensions.
+## Testing
 
-2. `applyHeroSignature(pngBase64, width, height): Promise<string>` — **thin
-   browser wrapper**, not unit-tested (needs Canvas). Draws the PNG to a canvas,
-   draws the SVG overlay on top (via an `Image` from the SVG data URI), returns
-   the composited PNG as base64. The overlay content comes entirely from unit 1,
-   so the untested part is only the canvas plumbing.
-
-The PNG is a same-origin data URI (our own server's base64), so the canvas is not
-tainted and `toDataURL` succeeds.
-
-### Signature parameters (match fallback + mockup C)
-
-- **Bottom fade** — vertical linear gradient, transparent to ~55%, to near-black
-  (`#050403`, ~0.9) at the base. Keeps any H1 the site overlays legible.
-- **Top-right glow** — radial, gold `#c9a876` ~0.35 at ~(76%, 22%) fading to 0.
-- **Gold rule** — a short `#c9a876` bar (~8% of width, 3px scaled) at lower-left.
-
-### Only live PNGs are composited
-
-The mock SVG fallback already carries this look, so compositing it would double
-the signature. `applyHeroSignature` runs only when `hero.mode === 'live'`.
-
-## Wiring
-
-`app/components/ExportTab.tsx` — after `generateImage()` receives a live hero,
-composite before setting state, so `hero` holds the patterned image for both
-preview and publish. A visible note already distinguishes the live/mock badge; no
-new UI needed.
-
-## Testing (Node built-in runner)
-
-- `heroSignatureSvg()` — returns valid SVG; contains the glow, fade and rule;
-  the rule position and glow radius scale with `width`/`height`; gold is the
-  brand `#c9a876`.
-- No test for the canvas wrapper (no DOM in `node:test`); it is deliberately thin
-  and delegates all content to the tested function.
-- Existing image tests still pass.
+- `heroPattern.test.ts` (9): well-formed SVG at size; renders title + eyebrow;
+  escapes markup in the title; brand gold; **deterministic** (same slug → identical
+  bytes); **varies by slug**; scales with the canvas; wraps a long title to ≤3
+  lines; inert markup (no script/href).
+- Removed: the `imageGenerator` mock-SVG test in `pipeline.test.ts` and the
+  `heroSignature` suite — both covered retired code.
+- Suite: 170 pass, typecheck and build clean; `/api/image` absent from the build.
 
 ## Verification
 
-The studio runs on Vercel. After deploy: generate a hero in the Export tab and
-confirm the glow, fade and rule appear on the live image, and that the mock
-fallback is not double-stamped. Screenshot for the user.
+Rasterised the real `heroPatternSvg` output for two posts and inspected the PNGs:
+gold glow top-right, thin rays fanning from the corner, eyebrow, cream serif
+title, gold rule — and the two posts visibly differ while staying one family.
+Full in-browser generate on the deployed studio confirms it after Vercel deploys.
 
 ## Out of scope
 
-- Any change to the website repo (`ZyraUpdated`).
-- Reprocessing existing posters — the pattern applies to newly generated images.
-- A raster image dependency (sharp/canvas-node) — the browser Canvas avoids it.
+- Any website-repo change.
+- Reprocessing existing posters.
+- Keeping the OpenAI photo path as an option — the pattern replaces it outright.

@@ -254,14 +254,3 @@ test('parseMarkdown handles fences, tables, and inline bold (live-path parsing)'
   const p = blocks.find((b) => b.type === 'p');
   assert.equal(p!.text, 'A bold claim and a link.'); // bold + link stripped, no fence
 });
-
-test('imageGenerator returns a deterministic mock SVG when no key is set', async () => {
-  const { imageGenerator } = await import('../src/lib/modules/imageGenerator.ts');
-  const a = await imageGenerator({ title: 'AI Brand Film Cost in India', slug: 'ai-brand-film-cost' });
-  const b = await imageGenerator({ title: 'AI Brand Film Cost in India', slug: 'ai-brand-film-cost' });
-  assert.equal(a.mode, 'mock');
-  assert.equal(a.publishable, false);
-  assert.equal(a.posterPath, '/posters/REPLACE-ME.webp'); // mock never claims a real poster
-  assert.ok(a.dataUrl.startsWith('data:image/svg+xml;base64,'));
-  assert.equal(a.dataUrl, b.dataUrl); // deterministic
-});
