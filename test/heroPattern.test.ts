@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { heroPatternSvg, GOLD } from '../src/lib/export/heroPattern.ts';
+import { heroPatternSvg, GOLD, MOTIFS, motifFor } from '../src/lib/export/heroPattern.ts';
 
 test('produces a well-formed SVG at the requested size', () => {
   const svg = heroPatternSvg({ title: 'The Cost of AI Brand Films', slug: 'cost-ai-brand-films', width: 1536, height: 1024 });
@@ -32,13 +32,14 @@ test('is deterministic: same slug and title give byte-identical output', () => {
   assert.equal(a, b);
 });
 
-test('varies by slug: different posts get different ray layouts', () => {
+test('varies by slug: different posts render differently', () => {
   const a = heroPatternSvg({ title: 'A Title', slug: 'post-one' });
   const b = heroPatternSvg({ title: 'A Title', slug: 'post-two' });
-  const rays = (s: string) => s.match(/<line /g)?.length ?? 0;
-  // Same family, but the actual ray geometry differs.
   assert.notEqual(a, b, 'two slugs must not render identically');
-  assert.ok(rays(a) > 0 && rays(b) > 0, 'both have rays');
+  // Each motif draws with its own primitive - lines, paths, circles or rects -
+  // so assert that art exists rather than that it is any one shape.
+  const draws = (s: string) => /<line|<path|<circle|<rect/.test(s);
+  assert.ok(draws(a) && draws(b), 'both draw geometry');
 });
 
 test('the rays scale with the canvas, not fixed pixels', () => {
@@ -58,4 +59,42 @@ test('a long title wraps to at most three lines', () => {
 test('is inert markup: no script or external refs', () => {
   const svg = heroPatternSvg({ title: 'x', slug: 's' });
   assert.ok(!/script|href|xlink/i.test(svg));
+});
+
+// ── motif rotation ──────────────────────────────────────────────────────────
+
+test('every motif renders a complete hero', () => {
+  for (const m of MOTIFS) {
+    const svg = heroPatternSvg({ title: 'The Cost of AI Brand Films', slug: `demo-${m}`, motif: m });
+    assert.match(svg, /^<svg[^>]*>/, `${m}: opens`);
+    assert.match(svg, /<\/svg>$/, `${m}: closes`);
+    assert.ok(svg.includes('WHERE AI MEETS CINEMA'), `${m}: eyebrow`);
+    assert.ok(svg.includes('Brand'), `${m}: title`);
+    assert.ok(svg.includes(GOLD), `${m}: brand gold`);
+    assert.ok(svg.includes(`data-motif="${m}"`), `${m}: tagged with its motif`);
+    // the motif must actually draw something behind the chrome
+    const art = svg.split('<rect width=')[1] ?? '';
+    assert.ok(/<line|<path|<circle|<rect/.test(art), `${m}: draws geometry`);
+  }
+});
+
+test('the motif is chosen by the slug and is stable', () => {
+  assert.equal(motifFor('a-post'), motifFor('a-post'));
+  assert.ok(MOTIFS.includes(motifFor('any-slug')));
+});
+
+test('different slugs spread across several motifs, not just one', () => {
+  const seen = new Set(Array.from({ length: 60 }, (_, i) => motifFor(`post-number-${i}`)));
+  assert.ok(seen.size >= 4, `expected variety across posts, got ${[...seen].join(', ')}`);
+});
+
+test('an explicit motif overrides the slug', () => {
+  const svg = heroPatternSvg({ title: 'x', slug: 'whatever', motif: 'waveform' });
+  assert.ok(svg.includes('data-motif="waveform"'));
+});
+
+test('gradient ids are namespaced so heroes can be inlined side by side', () => {
+  const a = heroPatternSvg({ title: 'x', slug: 's', motif: 'rays' });
+  const b = heroPatternSvg({ title: 'x', slug: 's', motif: 'contour' });
+  assert.ok(a.includes('hp-glow-rays') && b.includes('hp-glow-contour'), 'ids carry the motif');
 });
