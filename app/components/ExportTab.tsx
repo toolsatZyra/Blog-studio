@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Exports, Brief, Inputs, HeroImage, Audit, Draft } from '@/lib/types';
 import { CopyBlock } from './ui';
 import { buildReviewDocx, DOCX_MIME } from '@/lib/export/docx';
+import { applyHeroSignature } from '@/lib/export/applyHeroSignature';
 
 function download(name: string, content: string, type = 'text/plain') {
   const blob = new Blob([content], { type });
@@ -67,7 +68,22 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
         }),
       });
       const data = await res.json();
-      if (data.error) setImgErr(data.error); else setHero(data.heroImage);
+      if (data.error) { setImgErr(data.error); setImgLoading(false); return; }
+
+      let heroImage = data.heroImage as HeroImage;
+      // Bake the house signature into the real PNG so every published hero shares
+      // it. The mock SVG fallback already carries this look, so signing it would
+      // double-stamp - only composite a live raster image. A compositing failure
+      // must not lose the image: fall back to the unsigned hero.
+      if (heroImage?.mode === 'live' && heroImage.ext === 'png') {
+        try {
+          const signed = await applyHeroSignature(heroImage.base64);
+          heroImage = { ...heroImage, base64: signed, dataUrl: `data:image/png;base64,${signed}` };
+        } catch (e) {
+          console.warn('[hero signature] skipped:', (e as Error).message);
+        }
+      }
+      setHero(heroImage);
     } catch (e) { setImgErr((e as Error).message); }
     setImgLoading(false);
   }
