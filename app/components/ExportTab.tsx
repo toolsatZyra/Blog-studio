@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { Exports, Brief, Inputs, HeroImage, Audit, Draft } from '@/lib/types';
 import { CopyBlock } from './ui';
 import { buildReviewDocx, DOCX_MIME } from '@/lib/export/docx';
-import { heroPatternSvg } from '@/lib/export/heroPattern';
+import { heroPatternSvg, motifFor, MOTIFS } from '@/lib/export/heroPattern';
 import { svgToPngBase64 } from '@/lib/export/rasterizeSvg';
 
 function download(name: string, content: string, type = 'text/plain') {
@@ -23,6 +23,9 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
   const [pubErr, setPubErr] = useState('');
   const [copied, setCopied] = useState(false);
   const [docxBusy, setDocxBusy] = useState(false);
+  // Which alternative we're showing. Regenerate advances it, so the button
+  // actually changes the hero instead of recomputing the identical image.
+  const [variant, setVariant] = useState(0);
 
   // Markdown, not HTML: it pastes into Slack, email, Docs and Notion as readable
   // prose, where raw tags would arrive as noise.
@@ -61,13 +64,13 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
   // The hero is a generated PATTERN, not a photo: a deterministic branded SVG
   // (cinematic light rays + title, seeded by the slug) rasterised to PNG in the
   // browser. No API call, no cost, and every post gets a hero from one family.
-  async function generateImage() {
+  async function generateImage(nextVariant = variant) {
     if (!exports) return;
     setImgLoading(true); setImgErr(''); setHero(undefined);
     try {
       const { title, slug } = exports.blogPost;
       const W = 1536, H = 1024;
-      const svg = heroPatternSvg({ title, slug, width: W, height: H });
+      const svg = heroPatternSvg({ title, slug, width: W, height: H, variant: nextVariant });
       const base64 = await svgToPngBase64(svg, W, H);
       setHero({
         dataUrl: `data:image/png;base64,${base64}`,
@@ -76,7 +79,7 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
         ext: 'png',
         filename: `${slug}.png`,
         posterPath: `/posters/${slug}.png`,
-        prompt: 'Generated hero pattern (cinematic light rays)',
+        prompt: `Generated hero pattern (${motifFor(slug, nextVariant)})`,
         mode: 'live',
         publishable: true,
       });
@@ -106,8 +109,16 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
       <div className="card">
         <div className="export-head">
           <h3 style={{ margin: 0 }}>Hero pattern</h3>
-          <button className="btn secondary small" onClick={generateImage} disabled={imgLoading}>
-            {imgLoading ? <><span className="spinner" /> Generating…</> : hero ? 'Regenerate' : 'Generate hero pattern'}
+          <button
+            className="btn secondary small"
+            disabled={imgLoading}
+            onClick={() => {
+              const next = hero ? variant + 1 : variant;
+              setVariant(next);
+              generateImage(next);
+            }}
+          >
+            {imgLoading ? <><span className="spinner" /> Generating…</> : hero ? 'Try another pattern' : 'Generate hero pattern'}
           </button>
         </div>
         {imgErr && <div className="error">{imgErr}</div>}
@@ -117,7 +128,8 @@ export function ExportTab({ exports, brief, inputs, audit, draft }: { exports?: 
             <img src={hero.dataUrl} alt="Generated hero" style={{ width: '100%', borderRadius: 8, border: '1px solid var(--border)' }} />
             <p className="muted small" style={{ marginBottom: 0 }}>
               <span className={`badge ${hero.mode}`}>{hero.mode}</span>{' '}
-              Will be committed to <code>public/posters/{hero.filename}</code> and set as the poster.
+              <strong>{motifFor(exports.blogPost.slug, variant)}</strong> — pattern {(variant % MOTIFS.length) + 1} of {MOTIFS.length}.
+              {' '}Will be committed to <code>public/posters/{hero.filename}</code> and set as the poster.
             </p>
           </div>
         ) : <p className="muted small">A deterministic branded pattern — cinematic light rays and the title, seeded by the slug so every post gets its own. No API, no cost.</p>}

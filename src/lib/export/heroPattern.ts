@@ -40,6 +40,12 @@ export interface PatternInput {
   height?: number;
   /** Override the slug-derived motif. Used by the studio's motif picker. */
   motif?: Motif;
+  /**
+   * Which alternative to show for this post. 0 is the slug's default; each
+   * increment moves to the next motif and reseeds the geometry, so the studio's
+   * Regenerate button can cycle instead of recomputing the same image.
+   */
+  variant?: number;
 }
 
 /** Small deterministic hash of the slug → a stable integer seed. */
@@ -63,9 +69,9 @@ function rng(seed: number): () => number {
   };
 }
 
-/** Which motif this slug gets. Exported so the picker and tests agree. */
-export function motifFor(slug: string): Motif {
-  return MOTIFS[seedFrom(slug) % MOTIFS.length];
+/** Which motif this slug gets at a given variant. Exported so picker and tests agree. */
+export function motifFor(slug: string, variant = 0): Motif {
+  return MOTIFS[(seedFrom(slug) + variant) % MOTIFS.length];
 }
 
 function esc(s: string): string {
@@ -663,10 +669,12 @@ const RENDERERS: Record<Motif, (w: number, h: number, rand: () => number) => str
  * The hero SVG for a post. Deterministic in every input: the same slug always
  * yields the same motif and the same geometry.
  */
-export function heroPatternSvg({ title, slug, width = 1536, height = 1024, motif }: PatternInput): string {
+export function heroPatternSvg({ title, slug, width = 1536, height = 1024, motif, variant = 0 }: PatternInput): string {
   const key = slug || title;
-  const rand = rng(seedFrom(key));
-  const chosen: Motif = motif ?? motifFor(key);
+  // The variant shifts both the motif and the geometry seed, so cycling gives a
+  // genuinely different hero rather than the same drawing in a new shape.
+  const rand = rng(seedFrom(key) + variant * 0x9e3779b1);
+  const chosen: Motif = motif ?? motifFor(key, variant);
   const art = RENDERERS[chosen](width, height, rand);
 
   const titleLines = wrap(title, 24, 3);

@@ -100,3 +100,39 @@ test('gradient ids are namespaced so heroes can be inlined side by side', () => 
   const b = heroPatternSvg({ title: 'x', slug: 's', motif: 'contour' });
   assert.ok(a.includes('hp-glow-rays') && b.includes('hp-glow-contour'), 'ids carry the motif');
 });
+
+// ── Regenerate must actually change the hero ────────────────────────────────
+// Everything is seeded from the slug, so without a variant the studio's
+// Regenerate button recomputed a byte-identical image and appeared broken.
+
+test('advancing the variant gives a different hero', () => {
+  const a = heroPatternSvg({ title: 'A Post', slug: 'a-post', variant: 0 });
+  const b = heroPatternSvg({ title: 'A Post', slug: 'a-post', variant: 1 });
+  assert.notEqual(a, b, 'variant 1 must differ from variant 0');
+});
+
+test('each variant step lands on the next motif', () => {
+  const slug = 'a-post';
+  for (let v = 0; v < 5; v++) {
+    const i = MOTIFS.indexOf(motifFor(slug, v));
+    const next = MOTIFS.indexOf(motifFor(slug, v + 1));
+    assert.equal(next, (i + 1) % MOTIFS.length, `variant ${v} -> ${v + 1} should advance one motif`);
+  }
+});
+
+test('cycling a full lap returns to the starting motif', () => {
+  assert.equal(motifFor('a-post', MOTIFS.length), motifFor('a-post', 0));
+});
+
+test('variant 0 is still the slug default, and stays stable', () => {
+  assert.equal(motifFor('a-post'), motifFor('a-post', 0));
+  assert.equal(
+    heroPatternSvg({ title: 'A Post', slug: 'a-post' }),
+    heroPatternSvg({ title: 'A Post', slug: 'a-post', variant: 0 }),
+  );
+});
+
+test('cycling reaches every motif, so none is unreachable', () => {
+  const seen = new Set(Array.from({ length: MOTIFS.length }, (_, v) => motifFor('a-post', v)));
+  assert.equal(seen.size, MOTIFS.length, 'all 32 motifs reachable by cycling');
+});
