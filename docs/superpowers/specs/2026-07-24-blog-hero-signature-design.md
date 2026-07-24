@@ -1,109 +1,107 @@
-# Blog hero light signature — a consistent pattern across every blog hero
+# Blog hero light signature — baked into the image, in the studio
 
 **Date:** 2026-07-24
 **Status:** Approved — design locked (user, 2026-07-24)
-**Scope:** Site repo (`~/Documents/GitHub/ZyraUpdated`) only. Two files. No studio change.
+**Scope:** Studio repo (`Programmatic-SEO`) only. **The website repo is never touched.**
 
 ## Problem
 
-Blog hero images have no shared visual signature. The studio's `imageGenerator.ts`
-prompts OpenAI for a "dark, gold-accent, filmic" look, but an image model varies
-every generation, so the prompt gives a vibe, never a repeatable pattern. Posts
-sit side by side on `/blog` looking like unrelated images rather than one set.
+Blog hero images have no shared visual signature. `imageGenerator.ts` prompts
+OpenAI for a "dark, gold-accent, filmic" look, but an image model varies every
+generation, so the prompt gives a vibe, never a repeatable pattern. Posts sit
+side by side on the blog looking like unrelated images rather than one set.
 
-The user wants every blog hero on the site — existing posts and future ones — to
-carry the same recognizable pattern.
+The user wants every blog hero to carry the same recognizable pattern.
 
-## Decision (user, 2026-07-24)
+## Decisions (user, 2026-07-24)
 
-Two decisions, both made against alternatives:
+**1. The pattern is a "light signature" (option C of four shown).**
 
-**1. The pattern is a "light signature", option C of four shown.**
+Top-right gold glow + dark bottom fade + a short gold rule. Chosen over film
+texture (too subtle), a branded frame/wordmark (reads as a watermark, competes
+with the H1 the site lays over the hero), and a duotone grade (flattens the AI's
+colour work). C is already the look of the studio's own SVG fallback
+(`imageGenerator.ts` `brandedSvg`), so live photos and fallbacks finally agree.
 
-| Option | What it is | Why not |
-|---|---|---|
-| A · Film texture | grain + scanlines | too subtle; a texture you sense, not a pattern you see |
-| B · Branded frame | gold corner marks + ZYRA wordmark | reads as a watermark; competes with the H1 the site lays over the hero |
-| **C · Light signature** | **top-right gold glow + bottom fade + gold rule** | **chosen** |
-| D · Duotone grade | recolour everything black+gold | flattens the AI's colour work; strongest unifier but kills image richness |
+**2. Baked into the image in the studio — NOT a website change.**
 
-C won because it is already the look of the studio's deterministic SVG fallback
-(`imageGenerator.ts` `brandedSvg`), so live photos and fallbacks finally match,
-and it is subtle enough not to fight the generated image underneath.
+An earlier draft of this spec applied the pattern as a render-time overlay in the
+website repo (`ZyraUpdated`). The user ruled that out: the website's code is not
+to be touched from here. So the signature is composited onto the generated PNG
+inside the studio instead. It lives entirely in `Programmatic-SEO`.
 
-**2. Applied as a site-render overlay, not baked into the image file.**
-
-| Approach | Covers | Cost | Rejected because |
-|---|---|---|---|
-| **Site overlay (chosen)** | every blog, existing + future, on deploy | 2 files, no dependency, no reprocessing | — |
-| Bake into PNG (studio, canvas) | new images only, everywhere incl. OG | ~40 lines canvas | only NEW posts get it; existing posters unchanged |
-| Both | everything | most work; must tune so the signature is not applied twice | YAGNI for now |
-
-The site overlay covers **all existing blogs instantly**, which is what "all blogs
-on my website" asks for. The image model's output stays pristine underneath.
-
-### Accepted limits of the site-overlay approach
-
-1. **The OG / social-share thumbnail does not carry the pattern.** That is the raw
-   image file, which social platforms render directly; only the on-site hero is
-   overlaid. Accepted.
-2. **The studio's Export-tab preview will not show the pattern.** The signature
-   lives on the site, not in the generated file, so the studio preview and the
-   published hero differ. Minor; noted so it is not mistaken for a bug.
+| Consequence | Detail |
+|---|---|
+| Travels with the file | The pattern is part of the PNG, so it shows on-site, in OG/social thumbnails, everywhere the poster is used. |
+| **New images only** | Already-published posters are unchanged. A post gets the signature only when its hero is (re)generated. Accepted. |
+| No website edit | Nothing in `ZyraUpdated` changes. The site keeps rendering `post.poster` exactly as it does today. |
 
 ## Design
 
-### One component, used everywhere a hero renders
+### Where it happens: client-side, on the generated PNG
 
-`src/components/blog/BlogHeroSignature.tsx` — a positioned overlay layer, stacked
-over the existing `<Image>`. Three elements, matching the fallback SVG's palette
-(gold `#c9a876`):
+Image generation returns a PNG from `/api/image` (server) to the Export tab
+(browser). The signature is composited **in the browser** using the Canvas 2D
+API — so it adds **no dependency** (the project stays at next/react/docx) and is
+deterministic: the same overlay math runs every time.
 
-- **Top-right radial glow** — `#c9a876` fading to transparent, upper-right origin.
-- **Bottom fade** — dark vertical gradient. Doubles as legibility: the post page
-  lays the H1 over the hero, so the fade keeps it readable (it replaces the
-  current flat `bg-black/30`, which it improves on).
-- **Gold rule** — a short 3px `#c9a876` bar in the lower-left, the accent mark
-  from the fallback SVG.
+The composite replaces `hero.base64` / `hero.dataUrl` before anything is
+previewed or published, so **what you see is what publishes** — the existing
+principle of this tool.
 
-Pure CSS/SVG gradients — nothing rasterised, no per-render cost, cannot fail. A
-`variant` prop (`hero` | `card`) scales the rule and glow down for the smaller
-index thumbnails so the same signature reads at both sizes.
+### Two units, split so the math is testable
 
-Extracted as one component precisely so the post hero and the index cards cannot
-drift apart — one definition, used twice.
+1. `src/lib/export/heroSignature.ts` — **pure, unit-tested.**
+   `heroSignatureSvg(width, height): string` returns the overlay as an SVG
+   string: the three C elements, sized relative to the image dimensions
+   (glow radius, fade stops, rule position/length all derived from w/h). No DOM,
+   so `node:test` can assert its structure and that it scales with dimensions.
 
-### Two touch points
+2. `applyHeroSignature(pngBase64, width, height): Promise<string>` — **thin
+   browser wrapper**, not unit-tested (needs Canvas). Draws the PNG to a canvas,
+   draws the SVG overlay on top (via an `Image` from the SVG data URI), returns
+   the composited PNG as base64. The overlay content comes entirely from unit 1,
+   so the untested part is only the canvas plumbing.
 
-| File | Line (approx.) | Change |
-|---|---|---|
-| `src/app/blog/[slug]/page.tsx` | 116–118 | Replace the `bg-black/30` overlay div with `<BlogHeroSignature variant="hero" />` |
-| `src/app/blog/page.tsx` | index card thumbnail | Add `<BlogHeroSignature variant="card" />` inside the card's image container |
+The PNG is a same-origin data URI (our own server's base64), so the canvas is not
+tainted and `toDataURL` succeeds.
 
-Both are already `relative` containers with an absolutely-positioned `<Image fill>`,
-so the overlay drops in with no layout change.
+### Signature parameters (match fallback + mockup C)
 
-## Prerequisite
+- **Bottom fade** — vertical linear gradient, transparent to ~55%, to near-black
+  (`#050403`, ~0.9) at the base. Keeps any H1 the site overlays legible.
+- **Top-right glow** — radial, gold `#c9a876` ~0.35 at ~(76%, 22%) fading to 0.
+- **Gold rule** — a short `#c9a876` bar (~8% of width, 3px scaled) at lower-left.
 
-Local `master` is stale — the last merge happened on GitHub and this repo's CLI
-credential cannot fetch. **Pull `master` in GitHub Desktop before implementing**,
-or the edits apply to old files.
+### Only live PNGs are composited
+
+The mock SVG fallback already carries this look, so compositing it would double
+the signature. `applyHeroSignature` runs only when `hero.mode === 'live'`.
+
+## Wiring
+
+`app/components/ExportTab.tsx` — after `generateImage()` receives a live hero,
+composite before setting state, so `hero` holds the patterned image for both
+preview and publish. A visible note already distinguishes the live/mock badge; no
+new UI needed.
+
+## Testing (Node built-in runner)
+
+- `heroSignatureSvg()` — returns valid SVG; contains the glow, fade and rule;
+  the rule position and glow radius scale with `width`/`height`; gold is the
+  brand `#c9a876`.
+- No test for the canvas wrapper (no DOM in `node:test`); it is deliberately thin
+  and delegates all content to the tested function.
+- Existing image tests still pass.
 
 ## Verification
 
-No test runner in the site repo (`dev`, `build`, `lint` only). Verify by render:
-
-1. `npm run build` — the blog post and index pages still prerender.
-2. Dev server on **port 3007**; open a real post and `/blog`.
-3. Confirm the glow, fade and rule appear over the hero and on the cards, and the
-   H1 stays legible over the fade.
-4. Screenshot for the user. (Scrolled screenshots come back black in this harness —
-   capture at scroll 0 or a tall viewport.)
+The studio runs on Vercel. After deploy: generate a hero in the Export tab and
+confirm the glow, fade and rule appear on the live image, and that the mock
+fallback is not double-stamped. Screenshot for the user.
 
 ## Out of scope
 
-- Baking the pattern into the image file (OG/social coverage) — revisit if social
-  thumbnails matter later.
-- Any studio change. `imageGenerator.ts` already produces this look as its
-  fallback; the live PNG stays clean by design.
-- Reprocessing existing posters — unnecessary, the overlay covers them at render.
+- Any change to the website repo (`ZyraUpdated`).
+- Reprocessing existing posters — the pattern applies to newly generated images.
+- A raster image dependency (sharp/canvas-node) — the browser Canvas avoids it.
