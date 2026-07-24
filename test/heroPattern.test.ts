@@ -38,8 +38,8 @@ test('varies by slug: different posts render differently', () => {
   assert.notEqual(a, b, 'two slugs must not render identically');
   // Each motif draws with its own primitive - lines, paths, circles or rects -
   // so assert that art exists rather than that it is any one shape.
-  const draws = (s: string) => /<line|<path|<circle|<rect|<ellipse|<polygon/.test(s);
-  assert.ok(draws(a) && draws(b), 'both draw geometry');
+  const art = (s: string) => (s.match(/<g>([\s\S]*?)<\/g>/)?.[1] ?? '').trim();
+  assert.ok(art(a).length > 0 && art(b).length > 0, 'both draw geometry');
 });
 
 test('the rays scale with the canvas, not fixed pixels', () => {
@@ -72,9 +72,11 @@ test('every motif renders a complete hero', () => {
     assert.ok(svg.includes('Brand'), `${m}: title`);
     assert.ok(svg.includes(GOLD), `${m}: brand gold`);
     assert.ok(svg.includes(`data-motif="${m}"`), `${m}: tagged with its motif`);
-    // the motif must actually draw something behind the chrome
-    const art = svg.split('<rect width=')[1] ?? '';
-    assert.ok(/<line|<path|<circle|<rect|<ellipse|<polygon/.test(art), `${m}: draws geometry`);
+    // The motif's art lives in the <g> group. Assert the group is non-empty
+    // rather than listing primitives - enumerating shapes meant this check kept
+    // going stale as motifs introduced ellipse, polygon, polyline.
+    const art = svg.match(/<g>([\s\S]*?)<\/g>/)?.[1] ?? '';
+    assert.ok(art.trim().length > 0, `${m}: motif group is empty - it draws nothing`);
   }
 });
 

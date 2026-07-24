@@ -1,6 +1,6 @@
 // The blog hero as a generated PATTERN, not a photo.
 //
-// One system, sixteen motifs. Every hero shares the same chrome - near-black
+// One system, thirty-two motifs. Every hero shares the same chrome - near-black
 // field, gold glow, bottom fade, studio eyebrow, cream serif title, gold rule -
 // and the slug picks which motif fills the space behind it:
 //
@@ -28,6 +28,8 @@ const EYEBROW = 'ZYRA · WHERE AI MEETS CINEMA';
 export const MOTIFS = [
   'rays', 'contour', 'frames', 'arcs', 'grid', 'aperture', 'waveform', 'horizon',
   'timeline', 'nodes', 'spectrum', 'flare', 'crosshatch', 'orbit', 'thirds', 'stairs',
+  'bokeh', 'reel', 'equalizer', 'matrix', 'wave', 'spiral', 'triangles', 'hexgrid',
+  'radar', 'barcode', 'slats', 'plus', 'chevron', 'lattice', 'burst', 'nest',
 ] as const;
 export type Motif = (typeof MOTIFS)[number];
 
@@ -380,6 +382,248 @@ function stairsMotif(w: number, h: number, rand: () => number): string {
   return out.join('');
 }
 
+
+/** Out-of-focus highlights - bokeh. */
+function bokehMotif(w: number, h: number, rand: () => number): string {
+  const n = 9 + Math.floor(rand() * 6);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.min(w, h) * (0.02 + rand() * 0.075);
+    out.push(`<circle cx="${round(w * (0.40 + rand() * 0.58))}" cy="${round(h * (0.05 + rand() * 0.42))}" r="${round(r)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.08 + rand() * 0.14).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** A film strip running down the right edge. */
+function reelMotif(w: number, h: number, rand: () => number): string {
+  const sw = w * 0.13, x = w - sw - w * 0.05;
+  const cells = 4 + Math.floor(rand() * 2);
+  const ch = h * 0.85 / cells;
+  const out: string[] = [`<rect x="${round(x)}" y="0" width="${round(sw)}" height="${round(h)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="0.16"/>`];
+  for (let i = 0; i < cells; i++) {
+    const y = h * 0.04 + i * ch;
+    out.push(`<rect x="${round(x + sw * 0.18)}" y="${round(y)}" width="${round(sw * 0.64)}" height="${round(ch * 0.72)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.12 + rand() * 0.10).toFixed(3)}"/>`);
+    for (const sx of [x + sw * 0.05, x + sw * 0.88]) {
+      out.push(`<rect x="${round(sx)}" y="${round(y + ch * 0.24)}" width="${round(sw * 0.06)}" height="${round(ch * 0.16)}" fill="${GOLD}" opacity="0.20"/>`);
+    }
+  }
+  return out.join('');
+}
+
+/** Equalizer columns rising from a baseline. */
+function equalizerMotif(w: number, h: number, rand: () => number): string {
+  const bars = 14 + Math.floor(rand() * 8);
+  const x0 = w * 0.44, span = w * 0.52, base = h * 0.44;
+  const bw = (span / bars) * 0.5;
+  const out: string[] = [];
+  for (let i = 0; i < bars; i++) {
+    const hgt = h * (0.04 + rand() * 0.28);
+    out.push(`<rect x="${round(x0 + (i * span) / bars)}" y="${round(base - hgt)}" width="${round(bw)}" height="${round(hgt)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.14 + rand() * 0.14).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** Falling digital columns - short vertical dashes. */
+function matrixMotif(w: number, h: number, rand: () => number): string {
+  const cols = 12 + Math.floor(rand() * 6);
+  const out: string[] = [];
+  for (let c = 0; c < cols; c++) {
+    const x = w * 0.42 + (c * w * 0.56) / cols;
+    const runs = 2 + Math.floor(rand() * 3);
+    for (let r = 0; r < runs; r++) {
+      const y = h * (0.04 + rand() * 0.40);
+      const len = h * (0.03 + rand() * 0.10);
+      out.push(`<line x1="${round(x)}" y1="${round(y)}" x2="${round(x)}" y2="${round(y + len)}" stroke="${GOLD}" stroke-width="1.5" opacity="${(0.10 + rand() * 0.16).toFixed(3)}"/>`);
+    }
+  }
+  return out.join('');
+}
+
+/** One long sine wave. */
+function waveMotif(w: number, h: number, rand: () => number): string {
+  const y = h * (0.22 + rand() * 0.14);
+  const amp = h * (0.06 + rand() * 0.07);
+  const k = 1.4 + rand() * 1.4;
+  const pts: string[] = [];
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60;
+    pts.push(`${round(w * t)} ${round(y + Math.sin(t * Math.PI * 2 * k) * amp)}`);
+  }
+  return `<polyline points="${pts.join(' ')}" fill="none" stroke="${GOLD}" stroke-width="1.5" opacity="0.24"/>`;
+}
+
+/** An archimedean spiral. */
+function spiralMotif(w: number, h: number, rand: () => number): string {
+  const cx = w * (0.72 + rand() * 0.08), cy = h * (0.30 + rand() * 0.06);
+  const turns = 3 + rand() * 2;
+  const rMax = Math.min(w, h) * (0.22 + rand() * 0.08);
+  const pts: string[] = [];
+  const steps = 220;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const a = t * turns * Math.PI * 2;
+    const r = t * rMax;
+    pts.push(`${round(cx + r * Math.cos(a))} ${round(cy + r * Math.sin(a))}`);
+  }
+  return `<polyline points="${pts.join(' ')}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="0.22"/>`;
+}
+
+/** Scattered outlined triangles. */
+function trianglesMotif(w: number, h: number, rand: () => number): string {
+  const n = 5 + Math.floor(rand() * 4);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const cx = w * (0.44 + rand() * 0.52), cy = h * (0.07 + rand() * 0.36);
+    const r = Math.min(w, h) * (0.035 + rand() * 0.06);
+    const rot = rand() * Math.PI * 2;
+    const p = [0, 1, 2].map((k) => {
+      const a = rot + (k / 3) * Math.PI * 2;
+      return `${round(cx + r * Math.cos(a))},${round(cy + r * Math.sin(a))}`;
+    }).join(' ');
+    out.push(`<polygon points="${p}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.12 + rand() * 0.12).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** A hexagonal tiling patch. */
+function hexgridMotif(w: number, h: number, rand: () => number): string {
+  const R = Math.min(w, h) * (0.05 + rand() * 0.02);
+  const dx = R * 1.73, dy = R * 1.5;
+  const cols = 5 + Math.floor(rand() * 2), rows = 3 + Math.floor(rand() * 2);
+  const x0 = w * 0.46, y0 = h * 0.08;
+  const out: string[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = x0 + c * dx + (r % 2 ? dx / 2 : 0);
+      const cy = y0 + r * dy;
+      const p = [0, 1, 2, 3, 4, 5].map((k) => {
+        const a = (Math.PI / 180) * (60 * k - 30);
+        return `${round(cx + R * Math.cos(a))},${round(cy + R * Math.sin(a))}`;
+      }).join(' ');
+      out.push(`<polygon points="${p}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.09 + rand() * 0.10).toFixed(3)}"/>`);
+    }
+  }
+  return out.join('');
+}
+
+/** A radar scope - rings, ticks and a sweep. */
+function radarMotif(w: number, h: number, rand: () => number): string {
+  const cx = w * (0.74 + rand() * 0.06), cy = h * (0.30 + rand() * 0.06);
+  const R = Math.min(w, h) * (0.24 + rand() * 0.05);
+  const out: string[] = [];
+  for (let i = 1; i <= 3; i++) {
+    out.push(`<circle cx="${round(cx)}" cy="${round(cy)}" r="${round((R * i) / 3)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="0.16"/>`);
+  }
+  const a = rand() * Math.PI * 2;
+  out.push(`<line x1="${round(cx)}" y1="${round(cy)}" x2="${round(cx + R * Math.cos(a))}" y2="${round(cy + R * Math.sin(a))}" stroke="${GOLD}" stroke-width="1.5" opacity="0.26"/>`);
+  for (let i = 0; i < 12; i++) {
+    const t = (i / 12) * Math.PI * 2;
+    out.push(`<line x1="${round(cx + R * 0.94 * Math.cos(t))}" y1="${round(cy + R * 0.94 * Math.sin(t))}" x2="${round(cx + R * Math.cos(t))}" y2="${round(cy + R * Math.sin(t))}" stroke="${GOLD}" stroke-width="1" opacity="0.18"/>`);
+  }
+  return out.join('');
+}
+
+/** Vertical lines of varying width - a barcode. */
+function barcodeMotif(w: number, h: number, rand: () => number): string {
+  const x0 = w * 0.44, span = w * 0.52;
+  const top = h * 0.10, bh = h * 0.28;
+  const out: string[] = [];
+  let x = x0;
+  while (x < x0 + span) {
+    const bw = span * (0.004 + rand() * 0.016);
+    out.push(`<rect x="${round(x)}" y="${round(top)}" width="${round(bw)}" height="${round(bh)}" fill="${GOLD}" opacity="${(0.12 + rand() * 0.16).toFixed(3)}"/>`);
+    x += bw + span * (0.006 + rand() * 0.018);
+  }
+  return out.join('');
+}
+
+/** Evenly spaced vertical slats, opacity drifting. */
+function slatsMotif(w: number, h: number, rand: () => number): string {
+  const n = 16 + Math.floor(rand() * 10);
+  const x0 = w * 0.40, span = w * 0.58;
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const x = x0 + (i * span) / n;
+    out.push(`<line x1="${round(x)}" y1="0" x2="${round(x)}" y2="${round(h * (0.30 + rand() * 0.28))}" stroke="${GOLD}" stroke-width="1" opacity="${(0.06 + rand() * 0.14).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** A field of small plus marks. */
+function plusMotif(w: number, h: number, rand: () => number): string {
+  const cols = 8 + Math.floor(rand() * 4), rows = 4 + Math.floor(rand() * 2);
+  const x0 = w * 0.44, y0 = h * 0.09;
+  const dx = (w * 0.52) / cols, dy = (h * 0.34) / rows;
+  const a = Math.min(dx, dy) * 0.18;
+  const out: string[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (rand() < 0.15) continue;
+      const x = x0 + c * dx, y = y0 + r * dy;
+      const op = (0.20 - (r / rows) * 0.10).toFixed(3);
+      out.push(`<path d="M${round(x - a)} ${round(y)} H${round(x + a)} M${round(x)} ${round(y - a)} V${round(y + a)}" stroke="${GOLD}" stroke-width="1" opacity="${op}"/>`);
+    }
+  }
+  return out.join('');
+}
+
+/** Chevrons marching right. */
+function chevronMotif(w: number, h: number, rand: () => number): string {
+  const n = 5 + Math.floor(rand() * 3);
+  const x0 = w * 0.48, y = h * 0.24;
+  const s = Math.min(w, h) * (0.06 + rand() * 0.03);
+  const gap = s * (1.3 + rand() * 0.5);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const x = x0 + i * gap;
+    out.push(`<path d="M${round(x)} ${round(y - s)} L${round(x + s * 0.7)} ${round(y)} L${round(x)} ${round(y + s)}" fill="none" stroke="${GOLD}" stroke-width="1.5" opacity="${(0.22 - i * 0.025).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** A diamond lattice. */
+function latticeMotif(w: number, h: number, rand: () => number): string {
+  const step = Math.min(w, h) * (0.075 + rand() * 0.03);
+  const x0 = w * 0.42, y0 = h * 0.05, cols = 7, rows = 4;
+  const out: string[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = x0 + c * step + (r % 2 ? step / 2 : 0);
+      const cy = y0 + r * step * 0.8;
+      const p = `${round(cx)},${round(cy - step * 0.4)} ${round(cx + step * 0.45)},${round(cy)} ${round(cx)},${round(cy + step * 0.4)} ${round(cx - step * 0.45)},${round(cy)}`;
+      out.push(`<polygon points="${p}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.08 + rand() * 0.09).toFixed(3)}"/>`);
+    }
+  }
+  return out.join('');
+}
+
+/** A starburst radiating from one point. */
+function burstMotif(w: number, h: number, rand: () => number): string {
+  const cx = w * (0.70 + rand() * 0.10), cy = h * (0.26 + rand() * 0.08);
+  const n = 14 + Math.floor(rand() * 10);
+  const R = Math.min(w, h) * (0.26 + rand() * 0.10);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rand() * 0.05;
+    const r0 = R * (0.18 + rand() * 0.2);
+    out.push(`<line x1="${round(cx + r0 * Math.cos(a))}" y1="${round(cy + r0 * Math.sin(a))}" x2="${round(cx + R * Math.cos(a))}" y2="${round(cy + R * Math.sin(a))}" stroke="${GOLD}" stroke-width="1" opacity="${(0.10 + rand() * 0.12).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
+/** Nested rounded rectangles - a depth stack. */
+function nestMotif(w: number, h: number, rand: () => number): string {
+  const cx = w * (0.70 + rand() * 0.08), cy = h * (0.28 + rand() * 0.06);
+  const n = 4 + Math.floor(rand() * 3);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const bw = Math.min(w, h) * (0.10 + i * 0.055);
+    const bh = bw * 0.66;
+    out.push(`<rect x="${round(cx - bw / 2)}" y="${round(cy - bh / 2)}" width="${round(bw)}" height="${round(bh)}" rx="${round(bw * 0.04)}" fill="none" stroke="${GOLD}" stroke-width="1" opacity="${(0.22 - i * 0.03).toFixed(3)}"/>`);
+  }
+  return out.join('');
+}
+
 const RENDERERS: Record<Motif, (w: number, h: number, rand: () => number) => string> = {
   rays: raysMotif,
   contour: contourMotif,
@@ -397,6 +641,22 @@ const RENDERERS: Record<Motif, (w: number, h: number, rand: () => number) => str
   orbit: orbitMotif,
   thirds: thirdsMotif,
   stairs: stairsMotif,
+  bokeh: bokehMotif,
+  reel: reelMotif,
+  equalizer: equalizerMotif,
+  matrix: matrixMotif,
+  wave: waveMotif,
+  spiral: spiralMotif,
+  triangles: trianglesMotif,
+  hexgrid: hexgridMotif,
+  radar: radarMotif,
+  barcode: barcodeMotif,
+  slats: slatsMotif,
+  plus: plusMotif,
+  chevron: chevronMotif,
+  lattice: latticeMotif,
+  burst: burstMotif,
+  nest: nestMotif,
 };
 
 /**
